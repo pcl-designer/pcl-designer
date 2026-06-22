@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcl-designer"
+version = "0.2.1"
+description = "Browser-based UI for generating optimal ordinal split-plot designs via the PCL surrogate"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Anonymous Authors" },
+]
+dependencies = [
+    "flask>=3.0,<4.0",
+    "waitress>=3.0,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pyinstaller>=6.5",
+]
+
+[project.scripts]
+pcl-designer = "pcl_designer.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["pcl_designer*"]
+
+[tool.setuptools.package-data]
+pcl_designer = ["templates/*.html", "static/*.css", "static/*.js"]

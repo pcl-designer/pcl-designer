@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCL Designer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+  <h1>PCL Designer</h1>
+  <p class="tagline">
+    Optimal D-designs for ordinal split-plot experiments via the
+    pairwise composite likelihood (PCL) surrogate.
+    <span class="version">v{{ version }}</span>
+  </p>
+</header>
+
+<main>
+  <form id="design-form">
+
+    <section>
+      <h2>Whole plot structure</h2>
+      <div class="grid">
+        <label>
+          <span>Number of whole plots <em>(m)</em></span>
+          <input type="number" id="m" name="m" min="2" step="1" value="10" required>
+        </label>
+        <label>
+          <span>Sub-plots per whole plot <em>(n)</em></span>
+          <input type="text" id="n" name="n" value="4" required
+                 pattern="^\s*\d+(\s*,\s*\d+)*\s*$"
+                 title="Either a single integer (equal blocks) or a comma-separated list of m integers (unequal blocks).">
+          <small>
+            Single number for equal blocks (e.g. <code>4</code>), or a
+            comma-separated list of <em>m</em> values for unequal blocks
+            (e.g. <code>4, 4, 6, 6</code>).
+          </small>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Response model</h2>
+      <div class="grid">
+        <label>
+          <span>Ordinal categories <em>(K)</em></span>
+          <input type="number" id="K" name="K" min="2" step="1" value="4" required>
+        </label>
+        <label id="sigma2-field" hidden>
+          <span>Whole-plot variance <em>(&sigma;<sup>2</sup>)</em></span>
+          <input type="number" id="sigma2" name="sigma2_fixed" min="0" step="0.1" value="2.5">
+          <small>Used only by the exact GLMM evaluator.</small>
+        </label>
+        <label id="lambda-field">
+          <span>Copula dependence <em>(&lambda;)</em></span>
+          <input type="number" id="lambda" name="lambda_fixed" min="0" step="0.1" value="3.0">
+          <small>Used only by the PCL surrogate (Frank copula parameter).</small>
+        </label>
+        <label>
+          <span>Random seed <em>(integer)</em></span>
+          <input type="number" id="seed" name="seed" min="1" step="1" placeholder="random if blank">
+          <small>Leave blank to let the server pick one.</small>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Factors</h2>
+      <p class="hint">
+        Enter level sets as comma-separated numbers (typical 2-level: <code>-1, 1</code>).
+        Whole-plot factors are hard-to-change; sub-plot factors are easy-to-change.
+      </p>
+      <div class="subsection">
+        <h3>Whole-plot factors</h3>
+        <div id="wp-factors"></div>
+        <button type="button" class="ghost" onclick="addFactor('wp')">+ Add whole-plot factor</button>
+      </div>
+      <div class="subsection">
+        <h3>Sub-plot factors</h3>
+        <div id="sp-factors"></div>
+        <button type="button" class="ghost" onclick="addFactor('sp')">+ Add sub-plot factor</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Model terms</h2>
+      <p class="hint">
+        One term per line. Use factor indices (1-based, in the order they appear above:
+        whole-plot factors first, then sub-plot factors).
+        <code>1</code> = main effect of factor 1; <code>1 3</code> = interaction A&times;C.
+      </p>
+      <div class="quick-fill">
+        <button type="button" class="ghost" onclick="fillTerms('main')">Main effects only</button>
+        <button type="button" class="ghost" onclick="fillTerms('main2fi')">Main + 2FI</button>
+      </div>
+      <textarea id="model-terms" rows="6" placeholder="1&#10;2&#10;3&#10;1 2"></textarea>
+    </section>
+
+    <section>
+      <h2>Advanced (optional)</h2>
+      <details>
+        <summary>Method, prior, timeout&hellip;</summary>
+        <div class="grid">
+          <label>
+            <span>Surrogate / evaluator</span>
+            <select id="eval-method" name="eval_method">
+              <option value="copula_pcl" selected>copula_pcl (PCL surrogate &mdash; recommended)</option>
+              <option value="glmm_exact">glmm_exact (exact GLMM &mdash; slow)</option>
+              <option value="glmm_approx">glmm_approx (independence GLM &mdash; reference)</option>
+            </select>
+            <small>
+              PCL surrogate uses &lambda; only; exact GLMM uses &sigma;<sup>2</sup>
+              only; independence GLM uses neither. The relevant field appears
+              under <em>Response model</em>.
+            </small>
+          </label>
+          <label>
+            <span>Criterion mode</span>
+            <select id="crit-mode" name="crit_mode">
+              <option value="average" selected>average (pseudo-Bayesian D)</option>
+              <option value="minimax">minimax</option>
+            </select>
+          </label>
+          <label>
+            <span>Copula type</span>
+            <select id="copula-type" name="copula_type">
+              <option value="0" selected>0 &mdash; Frank (default in paper)</option>
+            </select>
+          </label>
+          <label>
+            <span>Timeout (seconds)</span>
+            <input type="number" id="timeout-sec" name="timeout_sec" min="10" step="10" value="600">
+          </label>
+        </div>
+        <p class="hint">
+          Prior defaults to <code>&mu; = 0</code>, <code>&Sigma; = 0.25 I<sub>p</sub></code>
+          where <code>p = (K - 1) + #terms</code>. Custom priors not yet exposed in the UI.
+        </p>
+      </details>
+    </section>
+
+    <div class="actions">
+      <button type="submit" id="submit-btn">Generate optimal design</button>
+      <span id="status"></span>
+    </div>
+  </form>
+
+  <section id="results" hidden>
+    <h2>Result</h2>
+    <div class="result-summary">
+      <div>
+        <span class="metric-label" id="d-criterion-label">D-criterion</span>
+        <span id="d-criterion" class="metric-value">&mdash;</span>
+      </div>
+      <div>
+        <span class="metric-label">Wall-clock</span>
+        <span id="elapsed" class="metric-value">&mdash;</span>
+      </div>
+      <div>
+        <span class="metric-label">Design size</span>
+        <span id="dimensions" class="metric-value">&mdash;</span>
+      </div>
+      <div>
+        <span class="metric-label">Seed used</span>
+        <span id="seed-used" class="metric-value">&mdash;</span>
+      </div>
+    </div>
+
+    <div class="downloads">
+      <button type="button" id="download-runsheet">Download Run Sheet (CSV)</button>
+      <button type="button" id="download-model-matrix" class="ghost">Download Model Matrix (CSV)</button>
+      <button type="button" id="download-json" class="ghost">Download JSON</button>
+      <button type="button" id="rerun-new-seed" class="ghost">Re-run with new seed</button>
+    </div>
+
+    <h3>Design matrix</h3>
+    <p class="hint">
+      Default view is the <strong>Run Sheet</strong>: one column per factor,
+      showing the level to set in each run. This is what you need to
+      actually run the experiment. Toggle below to also show interaction
+      columns (the expanded model matrix, ready to use as the <code>X</code>
+      matrix when fitting a model later).
+    </p>
+    <p class="hint">
+      <em>Note on the criterion value:</em> the D-criterion above is
+      computed under the evaluator you selected (PCL surrogate, exact
+      GLMM, or independence GLM). When the evaluator is the PCL surrogate,
+      the number is the log-determinant of the surrogate information
+      matrix &mdash; an approximation of the exact-GLMM D-criterion. The
+      two agree closely in the paper's operating regime but are formally
+      distinct quantities.
+    </p>
+    <p class="hint" id="view-toggle-wrap">
+      <label style="display: inline-flex; align-items: center; gap: 0.5em; font-weight: normal;">
+        <input type="checkbox" id="show-interactions"> Show interaction columns
+      </label>
+    </p>
+    <div class="table-wrap">
+      <table id="design-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <details class="raw">
+      <summary>Raw binary output (stdout)</summary>
+      <pre id="raw-stdout"></pre>
+    </details>
+  </section>
+
+  <section id="error" hidden class="error-box">
+    <h2>Error</h2>
+    <p id="error-message"></p>
+  </section>
+</main>
+
+<footer>
+  <p>
+    Local app &mdash; nothing leaves your computer.
+    Reproduces the production CE search used in the
+    accompanying methods manuscript (under review).
+  </p>
+</footer>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

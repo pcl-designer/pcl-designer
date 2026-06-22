@@ -1,0 +1,174 @@
+# PCL Designer
+
+Browser-based desktop application for generating optimal D-designs for
+ordinal split-plot experiments using the pairwise composite likelihood (PCL)
+surrogate from the accompanying methods manuscript (under review).
+
+- **No MATLAB required.** Wraps the production CE binary in a local web UI.
+- **Nothing leaves your machine.** All computation is local; no network calls.
+- **Cross-platform.** Single-file executable for macOS (arm64, Intel), Linux, Windows.
+
+---
+
+## For practitioners (download and use)
+
+1. Download the installer for your platform from
+   [Releases](../../releases/latest):
+   - macOS Apple Silicon (M1/M2/M3/M4): `PCLDesigner-macos-arm64`
+   - Linux x86_64: `PCLDesigner-linux-x86_64`
+   - Windows x86_64: `PCLDesigner-windows-x86_64.exe`
+
+   *Intel Mac builds are not included by default* (the GitHub-hosted
+   Intel runners are unreliable). If you need one, clone this repo on an
+   Intel Mac and run `bash scripts/build_binary.sh` to produce a binary
+   locally.
+2. Double-click to launch. A console window opens, and your default browser
+   opens to a form at `http://localhost:8765`.
+3. Fill in the design parameters (block size, factors, model terms, etc.) and
+   click **Generate optimal design**.
+4. The design matrix appears in the browser. Download as CSV or JSON.
+5. Close the console window to quit the app.
+
+### Unsigned-binary warnings
+
+PCL Designer is currently unsigned. On first launch you'll see:
+
+- **macOS:** "App can't be opened because Apple cannot check it for malicious
+  software." Right-click the app → **Open** → confirm in the dialog. Only
+  needed the first time.
+- **Windows:** "Windows protected your PC." Click **More info** → **Run anyway.**
+- **Linux:** No prompt; you may need to `chmod +x PCLDesigner-linux-x86_64`.
+
+---
+
+## For developers
+
+### Run from source
+
+```bash
+# (Clone or unzip the supplied source archive)
+cd pcl-designer
+
+# Place the per-platform production_ce binary in binaries/
+# (e.g., build it from the methods paper's reproducibility archive)
+
+python -m venv .venv
+source .venv/bin/activate   # macOS / Linux
+# .venv\Scripts\activate    # Windows
+pip install -e ".[dev]"
+python -m pcl_designer
+```
+
+The browser will open to `http://localhost:8765` automatically.
+
+### Run the tests
+
+```bash
+pytest
+```
+
+Tests cover input validation, CSV writing, output parsing, and Flask routes.
+They do not invoke the C binary itself.
+
+### Package a standalone executable
+
+```bash
+pyinstaller packaging/pcl_designer.spec
+# Output appears at dist/PCLDesigner (or PCLDesigner.exe on Windows)
+```
+
+The PyInstaller spec auto-picks the correct `production_ce` binary from
+`binaries/` based on the build host. Build on the OS you want to target;
+or push a tag (`git tag v0.1.0 && git push --tags`) to trigger the
+GitHub Actions matrix build for all four platforms.
+
+### Repo layout
+
+```
+pcl-designer/
+├── pyproject.toml
+├── pcl_designer/
+│   ├── __init__.py
+│   ├── __main__.py            ← launcher: starts Waitress, opens browser
+│   ├── app.py                 ← Flask routes
+│   ├── runner.py              ← writes CSVs, spawns binary, parses output
+│   ├── validation.py          ← input validation with friendly errors
+│   ├── templates/index.html
+│   └── static/{style.css,app.js}
+├── csrc/production_ce/        ← vendored C source for production_ce
+├── scripts/build_binary.sh    ← builds C source + bundles runtime libs
+├── binaries/                  ← populated by build_binary.sh (gitignored)
+├── packaging/pcl_designer.spec
+├── tests/{test_validation,test_runner,test_app}.py
+└── .github/workflows/release.yml
+```
+
+### What the binary expects
+
+`runner.py` mirrors `call_gap_primary_standalone.m` from the methods
+paper's reproducibility archive. It writes seven artifacts into a temporary directory:
+
+| File | Shape | Notes |
+|---|---|---|
+| `priorMean.csv` | 1 × p | Defaults to zeros |
+| `priorCov.csv` | p × p | Defaults to 0.25 · I |
+| `wp_levels.csv` | #WP × max_levels | NaN-padded |
+| `sp_levels.csv` | #SP × max_levels | NaN-padded |
+| `modelTerms.csv` | #terms × max_term_len | Zero-padded |
+| `n_sizes.csv` | 1 × m | Block sizes per whole plot |
+| `config.txt` | Key=value | `m`, `K`, `seed`, `copula_type`, `sigma2_fixed`, `lambda_fixed`, `evalMethod`, `crit_mode` |
+
+Then spawns `production_ce` with the tempdir as cwd, parses
+`OptimalDesign_Output.csv` and the `D-Criterion:` line from stdout.
+
+### Building the binaries
+
+The C source for `production_ce` lives in `csrc/production_ce/` (vendored
+from the methods paper's reproducibility scaffold). To build for your current
+host and stage the result in `binaries/`:
+
+```bash
+bash scripts/build_binary.sh
+```
+
+This does three things:
+
+1. Runs `make` in `csrc/production_ce/`.
+2. Copies the resulting executable into `binaries/` with the
+   platform-suffixed name PyInstaller expects
+   (`production_ce_macos_arm64`, `production_ce_linux_x86_64`,
+   `production_ce_windows_x86_64.exe`, etc.).
+3. **Bundles the dynamic runtime dependencies alongside the binary** and
+   rewrites the binary's dynamic-loader paths so it loads them from its
+   own directory rather than the build host's absolute paths:
+
+| Platform | Runtime libs bundled | Loader fix |
+|---|---|---|
+| macOS | `libomp.dylib` | `install_name_tool -change @executable_path/...` |
+| Linux | `libgomp.so.1` | `patchelf --set-rpath '$ORIGIN'` |
+| Windows (MINGW64) | `libgomp-1.dll`, `libgcc_s_seh-1.dll`, `libwinpthread-1.dll` | (Windows loads DLLs from the .exe's directory by default) |
+
+After `build_binary.sh` runs, the contents of `binaries/` are portable to
+any same-OS / same-arch machine — no Homebrew, no MSYS2, no apt-installed
+gcc required on the user's side. The PyInstaller spec picks up the
+binary *and* its bundled runtime libs and packages them all into the
+final standalone executable.
+
+The CI workflow (`.github/workflows/release.yml`) runs `build_binary.sh`
+on each platform automatically; you only need to invoke it manually when
+testing locally before pushing a release tag.
+
+---
+
+## Citing
+
+If PCL Designer is part of work you publish, please cite the underlying
+methods paper:
+
+> [Author(s) anonymized for peer review] (under review). *Robust
+> D-Optimal Designs for Ordinal Split-Plot Experiments via a
+> Pairwise Composite Likelihood Surrogate.*
+
+## License
+
+MIT — see `LICENSE`.

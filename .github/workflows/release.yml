@@ -1,0 +1,159 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14         # Apple Silicon
+            artifact: PCLDesigner-macos-arm64
+            shell: bash
+          - os: ubuntu-22.04     # x86_64
+            artifact: PCLDesigner-linux-x86_64
+            shell: bash
+          - os: windows-2022     # x86_64 via MSYS2 MINGW64
+            artifact: PCLDesigner-windows-x86_64
+            shell: 'msys2 {0}'
+          # Intel Mac (macos-13) intentionally excluded — GitHub-hosted
+          # Intel runners are scarce and frequently queue for an hour+.
+          # To produce an Intel build on demand: clone the repo on an
+          # Intel Mac and run `bash scripts/build_binary.sh`, then either
+          # add `- os: macos-13` here for one release, or distribute the
+          # locally-built artifact directly.
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Toolchain setup -------------------------------------------------
+
+      - name: Install libomp + tools (macOS)
+        if: startsWith(matrix.os, 'macos')
+        shell: bash
+        run: brew install libomp
+
+      - name: Install build tools (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential patchelf
+
+      - name: Set up MSYS2 MINGW64 (Windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            make
+
+      # --- Python -----------------------------------------------------------
+
+      - name: Set up Python (non-Windows)
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Set up Python (Windows, via MSYS2)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          pacman --noconfirm -S mingw-w64-x86_64-python mingw-w64-x86_64-python-pip
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # --- Build the C binary and bundle runtime libs ----------------------
+
+      - name: Build production_ce + bundle runtime deps
+        run: bash scripts/build_binary.sh
+
+      - name: Run tests
+        run: pytest -q
+
+      # --- PyInstaller ------------------------------------------------------
+
+      - name: Run PyInstaller
+        run: pyinstaller packaging/pcl_designer.spec
+
+      - name: Bundle binary with USER_GUIDE.md and QUICKSTART.txt
+        shell: bash
+        run: |
+          BUNDLE_DIR="${{ matrix.artifact }}"
+          mkdir -p "$BUNDLE_DIR"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            mv dist/PCLDesigner.exe "$BUNDLE_DIR/${{ matrix.artifact }}.exe"
+          else
+            mv dist/PCLDesigner "$BUNDLE_DIR/${{ matrix.artifact }}"
+            chmod +x "$BUNDLE_DIR/${{ matrix.artifact }}"
+          fi
+          cp USER_GUIDE.md      "$BUNDLE_DIR/"
+          cp packaging/QUICKSTART.txt "$BUNDLE_DIR/"
+          # Use the platform's standard archive tool. zip preserves
+          # Unix execute permissions in its header, which macOS/Linux
+          # Finder/Nautilus restore on extract.
+          if command -v zip >/dev/null 2>&1; then
+            zip -r "dist/${BUNDLE_DIR}.zip" "$BUNDLE_DIR"
+          else
+            powershell -Command "Compress-Archive -Path '$BUNDLE_DIR' -DestinationPath 'dist/${BUNDLE_DIR}.zip'"
+          fi
+          ls -la "dist/${BUNDLE_DIR}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}.zip
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    # Publish whatever artifacts were built successfully, even if one
+    # platform job failed or was cancelled. Without `always()` the release
+    # job would skip whenever any matrix entry didn't succeed.
+    if: ${{ always() && startsWith(github.ref, 'refs/tags/v') }}
+    permissions:
+      contents: write
+    steps:
+      # Need the repo checked out so we can ship USER_GUIDE.md as a
+      # standalone download too (for previewing on the Releases page
+      # before downloading a full zip).
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p dist
+          # Per-platform bundle zips (each contains binary + USER_GUIDE.md + QUICKSTART.txt)
+          find artifacts -type f -name 'PCLDesigner-*.zip' -exec cp {} dist/ \;
+          # Also ship USER_GUIDE.md as a standalone asset so practitioners
+          # can preview it on the Releases page (GitHub renders .md inline
+          # when clicked) without downloading a 100-MB zip first.
+          cp USER_GUIDE.md dist/USER_GUIDE.md
+          ls -la dist/
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
