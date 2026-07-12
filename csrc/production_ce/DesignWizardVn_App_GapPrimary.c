@@ -459,6 +459,20 @@ static void b_computeFisher_Copula(const emxArray_real_T *theta,
       }
     }
   }
+  /* v0.2.2: weight the pairwise block accumulation by 1/(n-1), the standard
+     composite-likelihood weighting for unequal cluster sizes (Varin, Reid,
+     and Firth, 2011, Statistica Sinica 21:5-42). Each observation enters
+     n-1 sub-plot pairs, so this restores a common per-observation counting
+     rate across blocks of unequal size. For balanced designs the factor is
+     a design-independent constant and leaves design selection unchanged. */
+  if (Xwp->size[0] > 1) {
+    double w_pcl = 1.0 / ((double)Xwp->size[0] - 1.0);
+    int w_n = b_I->size[0] * b_I->size[1];
+    int w_i;
+    for (w_i = 0; w_i < w_n; w_i++) {
+      b_I->data[w_i] *= w_pcl;
+    }
+  }
   emxFree_real_T(&x_mm);
   emxFree_real_T(&x_mp);
   emxFree_real_T(&x_pm);
@@ -2403,6 +2417,20 @@ static void computeFisher_Copula(const emxArray_real_T *theta,
           I_data = b_I->data;
         }
       }
+    }
+  }
+  /* v0.2.2: weight the pairwise block accumulation by 1/(n-1), the standard
+     composite-likelihood weighting for unequal cluster sizes (Varin, Reid,
+     and Firth, 2011, Statistica Sinica 21:5-42). Each observation enters
+     n-1 sub-plot pairs, so this restores a common per-observation counting
+     rate across blocks of unequal size. For balanced designs the factor is
+     a design-independent constant and leaves design selection unchanged. */
+  if (Xwp->size[0] > 1) {
+    double w_pcl = 1.0 / ((double)Xwp->size[0] - 1.0);
+    int w_n = b_I->size[0] * b_I->size[1];
+    int w_i;
+    for (w_i = 0; w_i < w_n; w_i++) {
+      b_I->data[w_i] *= w_pcl;
     }
   }
   emxFree_real_T(&b_U);
