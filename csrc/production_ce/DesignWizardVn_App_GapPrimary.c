@@ -31,6 +31,9 @@
 #include <math.h>
 #include <string.h>
 
+/* v0.2.3: configurable restart count (default 15; set from config.txt by main) */
+int pcl_num_starts = 15;
+
 /* Variable Definitions */
 static const double dv[16] = {
     -4.6887389393058179, -3.8694479048601225,  -3.176999161979956,
@@ -2767,7 +2770,7 @@ static int coordinate_exchange_otf(
   emxArray_real_T *r;
   emxArray_real_T *start_designs;
   double idx_data[5000];
-  double best_crits[15];
+  double best_crits[PCL_MAX_STARTS];
   const double *lb_data;
   const double *ub_data;
   double best_v_crit;
@@ -2796,24 +2799,24 @@ static int coordinate_exchange_otf(
   best_idx_size = (int)nvars;
   i = best_idxs->size[0] * best_idxs->size[1];
   best_idxs->size[0] = (int)nvars;
-  best_idxs->size[1] = 15;
+  best_idxs->size[1] = pcl_num_starts;
   emxEnsureCapacity_real_T(best_idxs, i);
   best_idxs_data = best_idxs->data;
-  nx = (int)nvars * 15;
+  nx = (int)nvars * pcl_num_starts;
   for (i = 0; i < nx; i++) {
     best_idxs_data[i] = 0.0;
   }
   emxInit_real_T(&start_designs, 2);
   i = start_designs->size[0] * start_designs->size[1];
   start_designs->size[0] = (int)nvars;
-  start_designs->size[1] = 15;
+  start_designs->size[1] = pcl_num_starts;
   emxEnsureCapacity_real_T(start_designs, i);
   start_designs_data = start_designs->data;
   for (i = 0; i < nx; i++) {
     start_designs_data[i] = 0.0;
   }
   emxInit_real_T(&r, 1);
-  for (start_idx = 0; start_idx < 15; start_idx++) {
+  for (start_idx = 0; start_idx < pcl_num_starts; start_idx++) {
     b_rand(nvars, r);
     r1 = r->data;
     if (ub->size[0] == 1) {
@@ -2850,7 +2853,7 @@ static int coordinate_exchange_otf(
         new_crit, best_v_crit, best_val, iter, improved, current_crit,         \
             idx_data, i1, v, d1, i2, val)
 
-  for (b_start_idx = 0; b_start_idx < 15; b_start_idx++) {
+  for (b_start_idx = 0; b_start_idx < pcl_num_starts; b_start_idx++) {
     iter = start_designs->size[0];
     for (i1 = 0; i1 < iter; i1++) {
       idx_data[i1] =
@@ -2911,7 +2914,7 @@ static int coordinate_exchange_otf(
     nx = 0;
     k = 2;
     exitg1 = false;
-    while ((!exitg1) && (k < 16)) {
+    while ((!exitg1) && (k < pcl_num_starts + 1)) {
       if (!rtIsNaN(best_crits[k - 1])) {
         nx = k;
         exitg1 = true;
@@ -2926,7 +2929,7 @@ static int coordinate_exchange_otf(
   } else {
     *best_crit = best_crits[nx - 1];
     i = nx + 1;
-    for (k = i; k < 16; k++) {
+    for (k = i; k < pcl_num_starts + 1; k++) {
       double d;
       d = best_crits[k - 1];
       if (*best_crit < d) {

@@ -17,6 +17,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+/* v0.2.3: configurable restart count */
+#define PCL_MAX_STARTS 1024
+extern int pcl_num_starts;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -111,7 +111,7 @@ The factor numbering: whole-plot factors first (in the order you added them), th
 Use the **Main effects only** or **Main + 2FI** quick-fill buttons to populate the textarea with a common pattern, then edit as needed.
 
 ### Advanced (optional)
-Surrogate evaluator, criterion mode, copula type, and timeout. The defaults match the paper's recommended configuration.
+Surrogate evaluator, criterion mode, copula type, restart count, and timeout. The defaults match the paper's recommended configuration. The restart count (`num_starts`, default 15, maximum 1024) sets how many independent coordinate-exchange restarts the search runs before returning the best design; larger budgets (e.g. 100) are recommended at high parameter dimension, where the criterion landscape carries many local optima.
 
 ### Click "Generate optimal design"
 

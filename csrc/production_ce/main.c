@@ -59,6 +59,7 @@ void parse_config(double *m, double *K, double *sd,
             else if (strcmp(key, "lambda_fixed") == 0) *lam = atof(val);
             else if (strcmp(key, "evalMethod") == 0) strcpy(evalMeth, val);
             else if (strcmp(key, "crit_mode") == 0) strcpy(critMode, val);
+            else if (strcmp(key, "num_starts") == 0) pcl_num_starts = (int)atof(val);
         }
     }
     fclose(f);
@@ -189,6 +190,9 @@ int main(int argc, char **argv) {
     printf("--- D-Optimal Search Engine (Gap-Reparameterized v4) ---\n");
     printf("Framework: [%s] | Mode: [%s] | Seed: %.0f\n", evalMeth, critMode, sd);
     printf("Params: Copula=%.0f, Sigma2=%.2f, Lambda=%.2f\n", cType, s2, lam);
+    if (pcl_num_starts < 1) pcl_num_starts = 1;
+    if (pcl_num_starts > PCL_MAX_STARTS) pcl_num_starts = PCL_MAX_STARTS;
+    printf("Restarts: %d\n", pcl_num_starts);
     printf("Prior coordinates: GAP (alpha_1, log Delta_1, log Delta_2, beta)\n");
 
     time_t start_t, end_t;
