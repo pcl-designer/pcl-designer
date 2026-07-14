@@ -130,6 +130,7 @@ def write_inputs(params: dict[str, Any], work_dir: Path) -> None:
         f.write(f"lambda_fixed={params['lambda_fixed']}\n")
         f.write(f"evalMethod={params['eval_method']}\n")
         f.write(f"crit_mode={params['crit_mode']}\n")
+        f.write(f"num_starts={params['num_starts']}\n")
 
 
 # --------------------------------------------------------------------------

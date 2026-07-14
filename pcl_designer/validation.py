@@ -104,7 +104,7 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     Required keys: m, n, K, wp_levels, sp_levels, model_terms.
     Optional keys with defaults: sigma2_fixed, lambda_fixed, seed,
                                   copula_type, eval_method, crit_mode,
-                                  prior_mean, prior_cov, timeout_sec.
+                                  prior_mean, prior_cov, timeout_sec, num_starts.
     """
     if not isinstance(payload, dict):
         raise ValidationError("Request body must be a JSON object.")
@@ -211,6 +211,10 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
 
     timeout_sec = _as_float(payload.get("timeout_sec", 600.0), "timeout_sec", minimum=0.0)
 
+    num_starts = _as_int(payload.get("num_starts", 15), "num_starts (CE restarts)", minimum=1)
+    if num_starts > 1024:
+        raise ValidationError("num_starts must be at most 1024.")
+
     term_labels = model_term_labels(model_terms, len(wp_levels), len(sp_levels))
 
     # Indices (0-based, into the binary's output columns) of terms that
@@ -239,6 +243,7 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
         "prior_mean": prior_mean,
         "prior_cov": prior_cov,
         "timeout_sec": timeout_sec,
+        "num_starts": num_starts,
         "num_factors": num_factors,
         "num_wp_factors": len(wp_levels),
         "num_sp_factors": len(sp_levels),

@@ -49,6 +49,7 @@ def create_app() -> Flask:
                 "sigma2_fixed": params["sigma2_fixed"],
                 "lambda_fixed": params["lambda_fixed"],
                 "seed": params["seed"],
+                "num_starts": params["num_starts"],
             },
         })
 

@@ -175,6 +175,7 @@ MIT — see `LICENSE`.
 
 ## Changelog
 
+- **v0.2.4** --- The web app's Advanced panel now exposes the coordinate-exchange restart count (`num_starts`, default 15, maximum 1024), which v0.2.3 introduced at the `config.txt` level. No changes to the search binaries.
 - **v0.2.3** --- The number of coordinate-exchange restarts is now configurable: add `num_starts=<k>` to `config.txt` (default 15, maximum 1024; the value is echoed in the run banner). Search behavior is otherwise unchanged, and for a given seed the first 15 restarts of a larger run reproduce a default run exactly, so `num_starts=15` (or omitting the key) is bit-identical to v0.2.2. Larger restart budgets are recommended at high parameter dimension, where the criterion landscape carries many local optima.
 - **v0.2.2** --- The PCL evaluators (`copula_pcl`, `copula_pcl_godambe`) now weight each block's pairwise accumulation by 1/(n_i - 1), the standard composite-likelihood weighting for unequal cluster sizes (Varin, Reid & Firth, 2011, *Statistica Sinica* 21:5-42). Each observation enters n_i - 1 sub-plot pairs, so the weighting restores a common per-observation counting rate across blocks of unequal size. For **balanced** designs the factor is a design-independent constant: optimal designs are identical to v0.2.1 and the reported D-criterion shifts by exactly p*ln(n-1). For **unbalanced** designs, v0.2.2 selections supersede v0.2.1, which over-weighted large blocks.
 - **v0.2.1** --- Initial public release.
