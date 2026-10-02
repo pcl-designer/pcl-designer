@@ -48,6 +48,8 @@ def create_app() -> Flask:
                 "eval_method": params["eval_method"],
                 "sigma2_fixed": params["sigma2_fixed"],
                 "lambda_fixed": params["lambda_fixed"],
+                "copula_type": params["copula_type"],
+                "copula_family": params["copula_family"],
                 "seed": params["seed"],
                 "num_starts": params["num_starts"],
             },

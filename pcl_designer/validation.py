@@ -15,6 +15,16 @@ class ValidationError(Exception):
     """Raised when the incoming JSON payload fails validation."""
 
 
+# Copula families accepted by the optimizer's copula_type key.
+COPULA_FAMILIES = {0: "Frank", 1: "Clayton"}
+
+# The Clayton generator raises cumulative probabilities to the power -lambda,
+# which overflows for very small probabilities once lambda is large. lambda = 30
+# already corresponds to Kendall's tau = 0.9375, far beyond the within-block
+# dependence of practical split-plot experiments.
+CLAYTON_LAMBDA_MAX = 30.0
+
+
 def _as_int(value: Any, name: str, minimum: int | None = None) -> int:
     try:
         iv = int(value)
@@ -164,12 +174,28 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     lambda_fixed = _as_float(payload.get("lambda_fixed", 3.0), "lambda_fixed", minimum=0.0)
     seed = _as_int(payload.get("seed", random.randint(1, 2**31 - 1)), "seed", minimum=1)
     copula_type = _as_int(payload.get("copula_type", 0), "copula_type", minimum=0)
+    if copula_type not in COPULA_FAMILIES:
+        raise ValidationError(
+            "copula_type must be 0 (Frank) or 1 (Clayton) "
+            f"(got: {copula_type})."
+        )
 
     # --- Method strings (whitelist) ---
     eval_method = str(payload.get("eval_method", "copula_pcl"))
     if eval_method not in {"copula_pcl", "glmm_exact", "glmm_approx"}:
         raise ValidationError(
             f"eval_method must be one of: copula_pcl, glmm_exact, glmm_approx (got: {eval_method!r})."
+        )
+    if (
+        eval_method == "copula_pcl"
+        and copula_type == 1
+        and lambda_fixed > CLAYTON_LAMBDA_MAX
+    ):
+        raise ValidationError(
+            f"lambda_fixed must be at most {CLAYTON_LAMBDA_MAX:g} for the Clayton copula "
+            f"(got: {lambda_fixed:g}). Larger values imply Kendall's tau above "
+            f"{CLAYTON_LAMBDA_MAX / (CLAYTON_LAMBDA_MAX + 2):.3f} and overflow the "
+            "Clayton generator at small cumulative probabilities."
         )
     crit_mode = str(payload.get("crit_mode", "average"))
     if crit_mode not in {"average", "minimax"}:
@@ -238,6 +264,7 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
         "lambda_fixed": lambda_fixed,
         "seed": seed,
         "copula_type": copula_type,
+        "copula_family": COPULA_FAMILIES[copula_type],
         "eval_method": eval_method,
         "crit_mode": crit_mode,
         "prior_mean": prior_mean,

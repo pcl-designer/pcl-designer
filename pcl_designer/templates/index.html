@@ -53,11 +53,38 @@
           <input type="number" id="sigma2" name="sigma2_fixed" min="0" step="0.1" value="2.5">
           <small>Used only by the exact GLMM evaluator.</small>
         </label>
+        <label id="copula-family-field">
+          <span>Copula family</span>
+          <select id="copula-type" name="copula_type">
+            <option value="0" selected>Frank (used in the paper)</option>
+            <option value="1">Clayton</option>
+          </select>
+          <small id="copula-family-note">Symmetric dependence in both tails. This is the family evaluated in the paper.</small>
+        </label>
         <label id="lambda-field">
           <span>Copula dependence <em>(&lambda;)</em></span>
-          <input type="number" id="lambda" name="lambda_fixed" min="0" step="0.1" value="3.0">
-          <small>Used only by the PCL surrogate (Frank copula parameter).</small>
+          <input type="number" id="lambda" name="lambda_fixed" min="0" step="any" value="3.0">
+          <small>Used only by the PCL surrogate. <span id="lambda-tau"></span></small>
         </label>
+        <details id="converter-field" class="converter">
+          <summary>Set &lambda; from a whole-plot variance &sigma;<sup>2</sup></summary>
+          <div class="converter-body">
+            <label>
+              <span>Whole-plot variance <em>(&sigma;<sup>2</sup>)</em></span>
+              <input type="number" id="conv-sigma2" min="0" step="any" value="2.5">
+            </label>
+            <div class="converter-out">
+              <p id="conv-result" class="hint" aria-live="polite"></p>
+              <button type="button" id="conv-apply" class="ghost">Use this &lambda;</button>
+            </div>
+          </div>
+          <p class="hint">
+            Matches the GLMM and the copula through Kendall's &tau;, as in Section 5.1 of the paper.
+            The latent intra-block correlation is &rho; = &sigma;<sup>2</sup>/(&sigma;<sup>2</sup> + &pi;<sup>2</sup>/3),
+            its Kendall's &tau; is (2/&pi;) arcsin &rho;, and &lambda; is the copula parameter with that &tau;.
+            The paper's baseline &sigma;<sup>2</sup> = 2.5 gives Frank &lambda; = 2.741, which the paper rounds to 3.0.
+          </p>
+        </details>
         <label>
           <span>Random seed <em>(integer)</em></span>
           <input type="number" id="seed" name="seed" min="1" step="1" placeholder="random if blank">
@@ -111,8 +138,8 @@
               <option value="glmm_approx">glmm_approx (independence GLM &mdash; reference)</option>
             </select>
             <small>
-              PCL surrogate uses &lambda; only; exact GLMM uses &sigma;<sup>2</sup>
-              only; independence GLM uses neither. The relevant field appears
+              PCL surrogate uses the copula family and &lambda;; exact GLMM uses
+              &sigma;<sup>2</sup> only; independence GLM uses neither. The relevant field appears
               under <em>Response model</em>.
             </small>
           </label>
@@ -121,12 +148,6 @@
             <select id="crit-mode" name="crit_mode">
               <option value="average" selected>average (pseudo-Bayesian D)</option>
               <option value="minimax">minimax</option>
-            </select>
-          </label>
-          <label>
-            <span>Copula type</span>
-            <select id="copula-type" name="copula_type">
-              <option value="0" selected>0 &mdash; Frank (default in paper)</option>
             </select>
           </label>
           <label>

@@ -91,8 +91,10 @@ The browser form has five sections.
 
 ### Response model
 - **Ordinal categories (K):** the number of response categories your outcome takes.
-- **Whole-plot variance (σ²):** prior estimate of the between-block variance. Defaults to 2.5 (the paper's baseline).
-- **Copula dependence (λ):** strength of within-block dependence. Defaults to 3.0.
+- **Whole-plot variance (σ²):** prior estimate of the between-block variance, used by the exact GLMM evaluator. Defaults to 2.5 (the paper's baseline).
+- **Copula family:** the copula the PCL surrogate uses to couple sub-plot pairs. **Frank** (the default) has symmetric dependence and is the family evaluated in the paper. **Clayton** has lower-tail dependence, so responses within a whole plot are most strongly associated when they fall jointly in the low categories; it is provided for sensitivity analysis and was not evaluated in the paper.
+- **Copula dependence (λ):** strength of within-block dependence for the PCL surrogate. Defaults to 3.0, the paper's working value for the Frank copula. The field reports the Kendall's τ that the current λ implies under the selected family, which makes values comparable across families (for example, λ = 3 means τ ≈ 0.31 under Frank but τ = 0.60 under Clayton). Clayton λ is limited to at most 30 (τ = 0.94).
+- **Set λ from a whole-plot variance σ²:** if you think in terms of the GLMM whole-plot variance rather than λ, open this panel, enter σ², and click **Use this λ**. The conversion is the calibration of Section 5.1 of the paper. The latent intra-block correlation is ρ = σ²/(σ² + π²/3), its Kendall's τ is (2/π) arcsin ρ, and λ is the parameter of the selected copula with that τ. At the paper's baseline σ² = 2.5 this gives Frank λ = 2.741 (which the paper rounds to 3.0) and Clayton λ = 0.794. The same conversion is available from the command line as `python -m pcl_designer.dependence 2.5` (add `--family clayton` for Clayton).
 - **Random seed:** leave blank for a fresh random seed each run, or enter a specific integer for reproducibility.
 
 ### Factors
@@ -111,7 +113,7 @@ The factor numbering: whole-plot factors first (in the order you added them), th
 Use the **Main effects only** or **Main + 2FI** quick-fill buttons to populate the textarea with a common pattern, then edit as needed.
 
 ### Advanced (optional)
-Surrogate evaluator, criterion mode, copula type, restart count, timeout, and the prior. The defaults match the paper's recommended configuration. The restart count (`num_starts`, default 15, maximum 1024) sets how many independent coordinate-exchange restarts the search runs before returning the best design; larger budgets (e.g. 100) are recommended at high parameter dimension, where the criterion landscape carries many local optima.
+Surrogate evaluator, criterion mode, restart count, timeout, and the prior. (The copula family now sits next to λ under *Response model*.) The defaults match the paper's recommended configuration. The restart count (`num_starts`, default 15, maximum 1024) sets how many independent coordinate-exchange restarts the search runs before returning the best design; larger budgets (e.g. 100) are recommended at high parameter dimension, where the criterion landscape carries many local optima.
 
 The **prior** fields let you replace the default prior over the model parameters. Enter a prior-mean vector and a prior-covariance (a single scalar *s* for *s*&middot;I_p, *p* variances for a diagonal, or *p* rows of *p* values for a full matrix), both in the gap coordinates (alpha_1, logDelta_1, ..., beta_1, ...); the panel shows the required dimension *p* = (K-1) + #terms. Leave them blank to use the defaults (mu = 0, Sigma = 0.25 I_p).
 

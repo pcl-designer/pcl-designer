@@ -250,3 +250,49 @@ class TestMainEffectTermIndices:
         terms = [[1], [1, 2, 3]]
         result = validate_payload(self._base(terms))
         assert result["main_effect_term_indices"] == [0]
+
+
+def test_clayton_copula_accepted():
+    payload = _baseline_payload()
+    payload["copula_type"] = 1
+    payload["lambda_fixed"] = 0.79
+    p = validate_payload(payload)
+    assert p["copula_type"] == 1
+    assert p["copula_family"] == "Clayton"
+
+
+def test_default_copula_family_is_frank():
+    assert validate_payload(_baseline_payload())["copula_family"] == "Frank"
+
+
+def test_unknown_copula_type_rejected():
+    payload = _baseline_payload()
+    payload["copula_type"] = 2
+    with pytest.raises(ValidationError, match="copula_type"):
+        validate_payload(payload)
+
+
+def test_clayton_lambda_upper_bound():
+    payload = _baseline_payload()
+    payload["copula_type"] = 1
+    payload["lambda_fixed"] = 30.0
+    validate_payload(payload)  # boundary is allowed
+    payload["lambda_fixed"] = 31.0
+    with pytest.raises(ValidationError, match="Clayton"):
+        validate_payload(payload)
+
+
+def test_clayton_bound_ignored_when_lambda_unused():
+    # The exact GLMM never reads lambda, so the Clayton bound must not block it.
+    payload = _baseline_payload()
+    payload["copula_type"] = 1
+    payload["lambda_fixed"] = 100.0
+    payload["eval_method"] = "glmm_exact"
+    validate_payload(payload)
+
+
+def test_lambda_must_be_positive():
+    payload = _baseline_payload()
+    payload["lambda_fixed"] = 0.0
+    with pytest.raises(ValidationError, match="lambda_fixed"):
+        validate_payload(payload)

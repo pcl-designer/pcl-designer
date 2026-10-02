@@ -26,6 +26,13 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("eval-method").addEventListener("change", updateEvaluatorFields);
   updateEvaluatorFields();
 
+  // Copula family and the sigma^2 -> lambda converter (PCL surrogate only).
+  document.getElementById("copula-type").addEventListener("change", updateDependenceInfo);
+  document.getElementById("lambda").addEventListener("input", updateDependenceInfo);
+  document.getElementById("conv-sigma2").addEventListener("input", updateDependenceInfo);
+  document.getElementById("conv-apply").addEventListener("click", applyConvertedLambda);
+  updateDependenceInfo();
+
   document.getElementById("K").addEventListener("input", updatePriorDim);
   document.getElementById("model-terms").addEventListener("input", updatePriorDim);
   updatePriorDim();
@@ -53,6 +60,139 @@ function updateEvaluatorFields() {
   const lambdaField = document.getElementById("lambda-field");
   sigmaField.hidden = method !== "glmm_exact";
   lambdaField.hidden = method !== "copula_pcl";
+  document.getElementById("copula-family-field").hidden = method !== "copula_pcl";
+  document.getElementById("converter-field").hidden = method !== "copula_pcl";
+}
+
+// --------------------------- Copula dependence --------------------------
+//
+// Line-for-line port of pcl_designer/dependence.py (itself a port of the
+// stand-alone sigma2lambda.c tool). Implements the Section 5.1 calibration
+// sigma^2 -> rho -> Kendall's tau -> lambda for the Frank and Clayton copulas.
+
+const COPULA_FRANK = 0;
+const COPULA_CLAYTON = 1;
+const COPULA_NAMES = { 0: "Frank", 1: "Clayton" };
+const COPULA_NOTES = {
+  0: "Symmetric dependence in both tails. This is the family evaluated in the paper.",
+  1: "Lower-tail dependence, so responses within a whole plot are most strongly " +
+     "associated when they fall jointly in the low categories. Not evaluated in the paper.",
+};
+
+// 64-point Gauss-Legendre nodes and weights on [-1, 1] (positive half).
+const GL_X = [
+  0.0243502926634244, 0.072993121787799, 0.1214628192961206, 0.1696444204239928,
+  0.2174236437400071, 0.2646871622087674, 0.311322871990211, 0.3572201583376681,
+  0.4022701579639916, 0.4463660172534641, 0.489403145707053, 0.5312794640198946,
+  0.571895646202634, 0.6111553551723933, 0.6489654712546573, 0.6852363130542333,
+  0.7198818501716109, 0.7528199072605319, 0.7839723589433414, 0.8132653151227975,
+  0.8406292962525803, 0.8659993981540928, 0.8893154459951141, 0.9105221370785028,
+  0.9295691721319396, 0.9464113748584028, 0.9610087996520538, 0.973326827789911,
+  0.983336253884626, 0.9910133714767443, 0.9963401167719553, 0.9993050417357722
+];
+const GL_W = [
+  0.0486909570091397, 0.0485754674415034, 0.048344762234803, 0.0479993885964583,
+  0.0475401657148303, 0.04696818281621, 0.0462847965813144, 0.0454916279274181,
+  0.0445905581637566, 0.0435837245293235, 0.0424735151236536, 0.0412625632426235,
+  0.0399537411327203, 0.0385501531786156, 0.03705512854024, 0.0354722132568824,
+  0.0338051618371416, 0.0320579283548516, 0.0302346570724025, 0.0283396726142595,
+  0.0263774697150547, 0.0243527025687109, 0.0222701738083833, 0.0201348231535302,
+  0.0179517157756973, 0.0157260304760247, 0.0134630478967186, 0.0111681394601311,
+  0.0088467598263639, 0.0065044579689784, 0.0041470332605625, 0.0017832807216964
+];
+
+function debyeIntegrand(t) {
+  return t < 1e-12 ? 1.0 - t / 2.0 : t / Math.expm1(t);
+}
+
+function debye1(x) {
+  const npanel = Math.max(1, Math.ceil(x));
+  const h = x / npanel;
+  let total = 0.0;
+  for (let p = 0; p < npanel; p++) {
+    const c = p * h + h / 2.0;
+    const s = h / 2.0;
+    for (let i = 0; i < 32; i++) {
+      total += GL_W[i] * s * (debyeIntegrand(c - s * GL_X[i]) + debyeIntegrand(c + s * GL_X[i]));
+    }
+  }
+  return total / x;
+}
+
+function frankTau(lam) {
+  return lam <= 0 ? 0.0 : 1.0 - (4.0 / lam) * (1.0 - debye1(lam));
+}
+
+function claytonTau(lam) {
+  return lam <= 0 ? 0.0 : lam / (lam + 2.0);
+}
+
+function copulaTau(lam, family) {
+  return family === COPULA_CLAYTON ? claytonTau(lam) : frankTau(lam);
+}
+
+function tauToLambda(tau, family) {
+  if (!(tau >= 0 && tau < 1)) return NaN;
+  if (tau === 0) return 0.0;
+  if (family === COPULA_CLAYTON) return (2.0 * tau) / (1.0 - tau);
+  let lo = 1e-10, hi = 1.0;
+  while (frankTau(hi) < tau) {
+    hi *= 2.0;
+    if (hi > 1e6) return NaN;
+  }
+  for (let it = 0; it < 200; it++) {
+    const mid = 0.5 * (lo + hi);
+    if (frankTau(mid) < tau) lo = mid; else hi = mid;
+    if (hi - lo < 1e-13 * (1.0 + hi)) break;
+  }
+  return 0.5 * (lo + hi);
+}
+
+function sigma2ToLambda(sigma2, family) {
+  const rho = sigma2 / (sigma2 + (Math.PI * Math.PI) / 3.0);
+  const tau = (2.0 / Math.PI) * Math.asin(rho);
+  return { rho, tau, lambda: tauToLambda(tau, family) };
+}
+
+function selectedCopulaFamily() {
+  return parseInt(document.getElementById("copula-type").value, 10) === COPULA_CLAYTON
+    ? COPULA_CLAYTON : COPULA_FRANK;
+}
+
+let convertedLambda = NaN;
+
+function updateDependenceInfo() {
+  const family = selectedCopulaFamily();
+  const name = COPULA_NAMES[family];
+  document.getElementById("copula-family-note").textContent = COPULA_NOTES[family];
+
+  const lam = parseFloat(document.getElementById("lambda").value);
+  document.getElementById("lambda-tau").textContent =
+    Number.isFinite(lam) && lam > 0
+      ? `Under the ${name} copula, \u03bb = ${lam} corresponds to Kendall's \u03c4 = ${copulaTau(lam, family).toFixed(3)}.`
+      : "Must be greater than 0.";
+
+  const s2 = parseFloat(document.getElementById("conv-sigma2").value);
+  const out = document.getElementById("conv-result");
+  const btn = document.getElementById("conv-apply");
+  if (!(Number.isFinite(s2) && s2 > 0)) {
+    convertedLambda = NaN;
+    out.textContent = "Enter a whole-plot variance greater than 0.";
+    btn.disabled = true;
+    return;
+  }
+  const r = sigma2ToLambda(s2, family);
+  convertedLambda = r.lambda;
+  out.textContent =
+    `\u03c1 = ${r.rho.toFixed(4)}, \u03c4 = ${r.tau.toFixed(4)}, ` +
+    `so ${name} \u03bb = ${r.lambda.toFixed(4)}`;
+  btn.disabled = !Number.isFinite(r.lambda);
+}
+
+function applyConvertedLambda() {
+  if (!Number.isFinite(convertedLambda)) return;
+  document.getElementById("lambda").value = convertedLambda.toFixed(4);
+  updateDependenceInfo();
 }
 
 // --------------------------- Factor rows --------------------------------
@@ -312,7 +452,9 @@ function renderResults(result, echo, wallSec) {
   // The two agree closely under the paper's operating regime but are
   // formally distinct quantities; being explicit prevents confusion.
   document.getElementById("d-criterion-label").textContent =
-    `D-criterion (${evaluatorDisplayName(echo && echo.eval_method)})`;
+    `D-criterion (${evaluatorDisplayName(echo && echo.eval_method)}` +
+    (echo && echo.eval_method === "copula_pcl" && echo.copula_family
+      ? `, ${echo.copula_family} copula)` : ")");
   document.getElementById("elapsed").textContent = `${result.elapsed_sec.toFixed(1)} s`;
   document.getElementById("dimensions").textContent = `${result.n_rows} × ${result.n_cols}`;
   document.getElementById("seed-used").textContent = echo.seed;
