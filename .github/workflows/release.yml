@@ -55,9 +55,13 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          update: true
+          # Pin to the action's bundled MSYS2 snapshot rather than the rolling
+          # release: the rolling gcc (16.2.0) shipped a libgomp the linker could
+          # not find (-lgomp), breaking the OpenMP link. The full toolchain group
+          # also guarantees gcc's runtime libs (incl. libgomp) are installed.
+          update: false
           install: >-
-            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-toolchain
             make
 
       # --- Python -----------------------------------------------------------
