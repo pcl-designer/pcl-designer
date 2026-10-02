@@ -1,11 +1,10 @@
 /*
- * Academic License - for use in teaching, academic research, and meeting
- * course requirements at degree granting institutions only.  Not for
- * government, commercial, or other organizational use.
+ * Prerelease License - for engineering feedback and testing purposes
+ * only. Not for sale.
  * File: mtimes.c
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 01-Jun-2026 20:56:24
+ * C/C++ source code generated on  : 01-Oct-2026 20:44:50
  */
 
 /* Include Files */
@@ -15,6 +14,42 @@
 #include "rt_nonfinite.h"
 
 /* Function Definitions */
+/*
+ * Arguments    : const emxArray_real_T *A
+ *                const emxArray_real_T *B
+ *                emxArray_real_T *C
+ * Return Type  : void
+ */
+void b_mtimes(const emxArray_real_T *A, const emxArray_real_T *B,
+              emxArray_real_T *C)
+{
+  const double *A_data;
+  const double *B_data;
+  double *C_data;
+  int aoffset;
+  int i;
+  int inner;
+  int k;
+  int mc;
+  B_data = B->data;
+  A_data = A->data;
+  mc = A->size[0] - 1;
+  inner = A->size[1];
+  aoffset = C->size[0];
+  C->size[0] = A->size[0];
+  emxEnsureCapacity_real_T(C, aoffset);
+  C_data = C->data;
+  for (i = 0; i <= mc; i++) {
+    C_data[i] = 0.0;
+  }
+  for (k = 0; k < inner; k++) {
+    aoffset = k * A->size[0];
+    for (i = 0; i <= mc; i++) {
+      C_data[i] += A_data[aoffset + i] * B_data[k];
+    }
+  }
+}
+
 /*
  * Arguments    : const emxArray_real_T *A
  *                const emxArray_real_T *B

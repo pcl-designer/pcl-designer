@@ -10,6 +10,12 @@
 #include <time.h>
 #include <ctype.h>
 
+/* v0.2.5: num_starts is now an entry INPUT ARGUMENT (back-ported into the
+ * MATLAB source), not a post-codegen extern global. main owns the parsed
+ * value and passes it to the entry. */
+#define PCL_MAX_STARTS 1024
+int pcl_num_starts = 15;
+
 /*
  * v4 main wrapper for DesignWizardVn_App_GapPrimary.
  *
@@ -202,11 +208,12 @@ int main(int argc, char **argv) {
     double optCrit;
     emxInitArray_real_T(&optX, 2);
 
-    /* 6. Run Search (27-argument signature; matches codegen output) */
+    /* 6. Run Search (num_starts passed as the final input argument) */
     DesignWizardVn_App_GapPrimary(m, n_arr, K, pMean, pCov, 1000.0,
         "quadrature", qSz, wpL_data, wpL_size, spL_data, spL_size, mTerms,
         evalMeth, pSz, critMode, cSz, cType,
         s2_data, s2_sz, lam_data, lam_sz, sd,
+        (double)pcl_num_starts,
         optX, &optCrit);
 
     time(&end_t);

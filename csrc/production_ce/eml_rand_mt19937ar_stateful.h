@@ -1,11 +1,10 @@
 /*
- * Academic License - for use in teaching, academic research, and meeting
- * course requirements at degree granting institutions only.  Not for
- * government, commercial, or other organizational use.
+ * Prerelease License - for engineering feedback and testing purposes
+ * only. Not for sale.
  * File: eml_rand_mt19937ar_stateful.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 01-Jun-2026 20:56:24
+ * C/C++ source code generated on  : 01-Oct-2026 20:44:50
  */
 
 #ifndef EML_RAND_MT19937AR_STATEFUL_H

@@ -1,11 +1,10 @@
 /*
- * Academic License - for use in teaching, academic research, and meeting
- * course requirements at degree granting institutions only.  Not for
- * government, commercial, or other organizational use.
+ * Prerelease License - for engineering feedback and testing purposes
+ * only. Not for sale.
  * File: blockedSummation.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 01-Jun-2026 20:56:24
+ * C/C++ source code generated on  : 01-Oct-2026 20:44:50
  */
 
 #ifndef BLOCKEDSUMMATION_H
