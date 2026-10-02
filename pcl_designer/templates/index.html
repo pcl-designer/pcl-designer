@@ -138,9 +138,31 @@
             <input type="number" id="num-starts" name="num_starts" min="1" max="1024" step="1" value="15">
           </label>
         </div>
+        <div class="grid">
+          <label>
+            <span>Prior mean &mu; (length p)</span>
+            <input type="text" id="prior-mean" name="prior_mean"
+                   placeholder="blank &rarr; 0 (p zeros)">
+            <small>
+              Space- or comma-separated, in gap coordinates
+              (&alpha;<sub>1</sub>, log&Delta;<sub>1</sub>, &hellip;, &beta;<sub>1</sub>, &hellip;).
+            </small>
+          </label>
+          <label>
+            <span>Prior covariance &Sigma;</span>
+            <textarea id="prior-cov" name="prior_cov" rows="4"
+                      placeholder="blank &rarr; 0.25 &middot; I&#8339;"></textarea>
+            <small>
+              One scalar &rarr; s&middot;I&#8339;; p values &rarr; diagonal variances;
+              or p rows of p values &rarr; full matrix.
+            </small>
+          </label>
+        </div>
         <p class="hint">
-          Prior defaults to <code>&mu; = 0</code>, <code>&Sigma; = 0.25 I<sub>p</sub></code>
-          where <code>p = (K - 1) + #terms</code>. Custom priors not yet exposed in the UI.
+          Prior is in gap coordinates with
+          <code>p = (K - 1) + #terms = <span id="prior-dim">&mdash;</span></code>.
+          Leave both blank for the defaults <code>&mu; = 0</code>,
+          <code>&Sigma; = 0.25 I<sub>p</sub></code>.
         </p>
       </details>
     </section>

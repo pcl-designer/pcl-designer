@@ -111,7 +111,9 @@ The factor numbering: whole-plot factors first (in the order you added them), th
 Use the **Main effects only** or **Main + 2FI** quick-fill buttons to populate the textarea with a common pattern, then edit as needed.
 
 ### Advanced (optional)
-Surrogate evaluator, criterion mode, copula type, restart count, and timeout. The defaults match the paper's recommended configuration. The restart count (`num_starts`, default 15, maximum 1024) sets how many independent coordinate-exchange restarts the search runs before returning the best design; larger budgets (e.g. 100) are recommended at high parameter dimension, where the criterion landscape carries many local optima.
+Surrogate evaluator, criterion mode, copula type, restart count, timeout, and the prior. The defaults match the paper's recommended configuration. The restart count (`num_starts`, default 15, maximum 1024) sets how many independent coordinate-exchange restarts the search runs before returning the best design; larger budgets (e.g. 100) are recommended at high parameter dimension, where the criterion landscape carries many local optima.
+
+The **prior** fields let you replace the default prior over the model parameters. Enter a prior-mean vector and a prior-covariance (a single scalar *s* for *s*&middot;I_p, *p* variances for a diagonal, or *p* rows of *p* values for a full matrix), both in the gap coordinates (alpha_1, logDelta_1, ..., beta_1, ...); the panel shows the required dimension *p* = (K-1) + #terms. Leave them blank to use the defaults (mu = 0, Sigma = 0.25 I_p).
 
 ### Click "Generate optimal design"
 

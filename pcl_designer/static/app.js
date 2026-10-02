@@ -26,6 +26,10 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("eval-method").addEventListener("change", updateEvaluatorFields);
   updateEvaluatorFields();
 
+  document.getElementById("K").addEventListener("input", updatePriorDim);
+  document.getElementById("model-terms").addEventListener("input", updatePriorDim);
+  updatePriorDim();
+
   document.getElementById("design-form").addEventListener("submit", onSubmit);
   document.getElementById("download-runsheet").addEventListener("click", downloadRunSheet);
   document.getElementById("download-model-matrix").addEventListener("click", downloadModelMatrix);
@@ -122,6 +126,7 @@ function fillTerms(kind) {
     }
   }
   ta.value = lines.join("\n");
+  updatePriorDim();
 }
 
 function readModelTerms() {
@@ -130,6 +135,82 @@ function readModelTerms() {
   return text.split(/\n+/).map((line) => {
     return line.trim().split(/[\s,]+/).filter((x) => x.length > 0).map(Number);
   });
+}
+
+// --------------------------- Prior parsing ------------------------------
+
+function parseNumList(str) {
+  return str.split(/[\s,]+/).filter((x) => x.length > 0).map(Number);
+}
+
+// Required prior dimension p = (K - 1) + number of model terms.
+function priorDim() {
+  const K = parseInt(document.getElementById("K").value, 10);
+  const terms = readModelTerms();
+  if (!Number.isFinite(K) || K < 2 || terms.length === 0) return null;
+  return (K - 1) + terms.length;
+}
+
+function updatePriorDim() {
+  const el = document.getElementById("prior-dim");
+  if (!el) return;
+  const p = priorDim();
+  el.textContent = p === null ? "\u2014" : String(p);
+}
+
+function identityScaled(p, s) {
+  return Array.from({ length: p }, (_, i) =>
+    Array.from({ length: p }, (_, j) => (i === j ? s : 0)));
+}
+
+function diagFromVariances(vars) {
+  const p = vars.length;
+  return Array.from({ length: p }, (_, i) =>
+    Array.from({ length: p }, (_, j) => (i === j ? vars[i] : 0)));
+}
+
+// Reads the optional prior mean/covariance fields and validates them against
+// p. Returns a partial payload { prior_mean?, prior_cov? }; omitted keys fall
+// back to the backend defaults (mu = 0, Sigma = 0.25 I_p). Throws on a size or
+// numeric error so collectPayload surfaces it.
+function readPrior(p) {
+  const out = {};
+  const meanRaw = document.getElementById("prior-mean").value.trim();
+  const covRaw = document.getElementById("prior-cov").value.trim();
+  if (!meanRaw && !covRaw) return out;
+  if (p === null) {
+    throw new Error("Set K and at least one model term before entering a prior.");
+  }
+  if (meanRaw) {
+    const mean = parseNumList(meanRaw);
+    if (mean.some((v) => !Number.isFinite(v))) {
+      throw new Error("Prior mean has a non-numeric entry.");
+    }
+    if (mean.length !== p) {
+      throw new Error(`Prior mean must have length p = ${p} (got ${mean.length}).`);
+    }
+    out.prior_mean = mean;
+  }
+  if (covRaw) {
+    const rows = covRaw.split(/\n+/).map(parseNumList).filter((r) => r.length > 0);
+    const flat = rows.flat();
+    if (flat.some((v) => !Number.isFinite(v))) {
+      throw new Error("Prior covariance has a non-numeric entry.");
+    }
+    let cov;
+    if (flat.length === 1) {
+      cov = identityScaled(p, flat[0]);
+    } else if (rows.length === 1 && rows[0].length === p) {
+      cov = diagFromVariances(rows[0]);
+    } else if (rows.length === p && rows.every((r) => r.length === p)) {
+      cov = rows;
+    } else {
+      throw new Error(
+        `Prior covariance must be one scalar, ${p} variances, or a ${p}\u00d7${p} matrix.`);
+    }
+    out.prior_cov = cov;
+  }
+  return out;
 }
 
 // --------------------------- Submit -------------------------------------
@@ -195,6 +276,8 @@ function collectPayload() {
       return null;
     }
 
+    const prior = readPrior((K - 1) + modelTerms.length);
+
     const payload = {
       m, n, K,
       sigma2_fixed: sigma2,
@@ -207,6 +290,7 @@ function collectPayload() {
       model_terms: modelTerms,
       timeout_sec: timeoutSec,
       num_starts: parseInt(document.getElementById("num-starts").value, 10) || 15,
+      ...prior,
     };
     if (seed !== undefined && !Number.isNaN(seed)) payload.seed = seed;
     return payload;
