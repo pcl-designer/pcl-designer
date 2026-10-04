@@ -597,7 +597,10 @@ async function onRefine() {
       `Refinement changed ${changed} of ${startDesign.length} runs in ` +
       `${refinedResult.elapsed_sec.toFixed(1)} s (σ² = ${sigma2}). ` +
       `Exact-GLMM D-criterion of the refined design: ` +
-      `${crit === null ? "—" : crit.toFixed(6)}.`;
+      `${crit === null ? "—" : crit.toFixed(6)}.` +
+      (changed === 0
+        ? " No exchange improved the exact criterion, so the PCL design is already a local optimum of it."
+        : "");
     document.getElementById("refine-result").hidden = false;
     document.querySelector('input[name="design-view"][value="refined"]').checked = true;
     onDesignViewChange();

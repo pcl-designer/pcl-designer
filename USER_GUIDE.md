@@ -130,7 +130,7 @@ The CE search runs for a few seconds to a few minutes depending on problem size.
 
 ### Refine with exact GLMM (optional)
 
-After a PCL search, the result panel offers **Refine with exact GLMM**. It runs one coordinate-exchange restart under the exact GLMM, starting from the PCL design, and keeps every exchange that improves the exact criterion. Because it starts close to a good design, it usually needs only a couple of passes and recovers most of any gap between the PCL design and the exact-GLMM optimum, at a fraction of the cost of a full exact search.
+After a PCL search, the result panel offers **Refine with exact GLMM**. It runs one coordinate-exchange restart under the exact GLMM, starting from the PCL design, and keeps every exchange that improves the exact criterion. When the PCL design falls short under the exact GLMM, this can close part or most of the gap at a fraction of the cost of a full exact search. In the two-whole-plot full-quadratic check of the accompanying paper, it raised the median exact-GLMM relative efficiency of the PCL design from 0.983 to 0.995. In the paper's case study, by contrast, the PCL design was already a local optimum of the exact criterion and refinement changed no runs. Refinement is a local search, so it cannot show that a design is the exact-GLMM optimum, only that no single exchange improves it.
 
 - **Whole-plot variance σ²:** the exact GLMM needs σ² rather than λ. The field is pre-filled from the σ² → λ converter.
 - **Timeout:** the refinement has its own timeout, 3600 s by default.

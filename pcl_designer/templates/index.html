@@ -227,8 +227,10 @@
       <p class="hint">
         Runs one exact-GLMM coordinate-exchange restart that starts from this
         PCL design and keeps every exchange that improves the exact criterion.
-        This usually recovers most of any gap between the PCL design and the
-        exact-GLMM optimum at a fraction of the cost of a full exact search.
+        When the PCL design falls short under the exact GLMM, this can close
+        part or most of the gap at a fraction of the cost of a full exact
+        search. If the PCL design is already a local optimum of the exact
+        criterion, no runs change.
       </p>
       <p class="hint" id="refine-cost"></p>
       <div class="refine-inputs">
