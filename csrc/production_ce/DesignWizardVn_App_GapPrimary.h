@@ -4,7 +4,7 @@
  * File: DesignWizardVn_App_GapPrimary.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 01-Oct-2026 20:44:50
+ * C/C++ source code generated on  : 03-Oct-2026 17:22:39
  */
 
 #ifndef DESIGNWIZARDVN_APP_GAPPRIMARY_H
@@ -31,7 +31,8 @@ extern void DesignWizardVn_App_GapPrimary(
     int evalMethod_size[2], char crit_mode_data[], int crit_mode_size[2],
     double copulaType, double sigma2_fixed_data[], int sigma2_fixed_size[2],
     const double lambda_fixed_data[], int lambda_fixed_size[2], double seed,
-    double num_starts, emxArray_real_T *optimalX, double *optimalCrit);
+    double num_starts, const emxArray_real_T *startX, emxArray_real_T *optimalX,
+    double *optimalCrit);
 
 #ifdef __cplusplus
 }

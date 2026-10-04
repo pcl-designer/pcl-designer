@@ -101,6 +101,11 @@ case "$UNAME_S" in
         install_name_tool -change "$LIBOMP_REF" "@executable_path/libomp.dylib" "$DEST"
         # Make libomp.dylib's own install name match its bundled location.
         install_name_tool -id "@executable_path/libomp.dylib" "$BIN_DIR/libomp.dylib"
+        # install_name_tool invalidates the linker's ad-hoc signature, and
+        # Apple silicon kills unsigned binaries on launch (exit -9). Re-sign
+        # both files ad hoc.
+        codesign --force --sign - "$BIN_DIR/libomp.dylib"
+        codesign --force --sign - "$DEST"
 
         echo "--- Verifying portability ---"
         echo "Binary install names:"

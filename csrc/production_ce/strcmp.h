@@ -1,33 +1,34 @@
 /*
  * Prerelease License - for engineering feedback and testing purposes
  * only. Not for sale.
- * File: rtGetInf.h
+ * File: strcmp.h
  *
  * MATLAB Coder version            : 24.1
  * C/C++ source code generated on  : 03-Oct-2026 17:22:39
  */
 
-#ifndef RTGETINF_H
-#define RTGETINF_H
+#ifndef STRCMP_H
+#define STRCMP_H
 
 /* Include Files */
 #include "rtwtypes.h"
+#include <stddef.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern real_T rtGetInf(void);
-extern real32_T rtGetInfF(void);
-extern real_T rtGetMinusInf(void);
-extern real32_T rtGetMinusInfF(void);
+/* Function Declarations */
+bool b_strcmp(const char a_data[], const int a_size[2]);
 
 #ifdef __cplusplus
 }
 #endif
+
 #endif
 /*
- * File trailer for rtGetInf.h
+ * File trailer for strcmp.h
  *
  * [EOF]
  */

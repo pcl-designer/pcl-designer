@@ -1,33 +1,34 @@
 /*
  * Prerelease License - for engineering feedback and testing purposes
  * only. Not for sale.
- * File: rtGetInf.h
+ * File: rng.h
  *
  * MATLAB Coder version            : 24.1
  * C/C++ source code generated on  : 03-Oct-2026 17:22:39
  */
 
-#ifndef RTGETINF_H
-#define RTGETINF_H
+#ifndef RNG_H
+#define RNG_H
 
 /* Include Files */
 #include "rtwtypes.h"
+#include <stddef.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern real_T rtGetInf(void);
-extern real32_T rtGetInfF(void);
-extern real_T rtGetMinusInf(void);
-extern real32_T rtGetMinusInfF(void);
+/* Function Declarations */
+void rng(double varargin_1);
 
 #ifdef __cplusplus
 }
 #endif
+
 #endif
 /*
- * File trailer for rtGetInf.h
+ * File trailer for rng.h
  *
  * [EOF]
  */

@@ -1,44 +1,43 @@
 /*
  * Prerelease License - for engineering feedback and testing purposes
  * only. Not for sale.
- * File: blockedSummation.c
+ * File: sum.c
  *
  * MATLAB Coder version            : 24.1
  * C/C++ source code generated on  : 03-Oct-2026 17:22:39
  */
 
 /* Include Files */
-#include "blockedSummation.h"
+#include "sum.h"
 #include "DesignWizardVn_App_GapPrimary_types.h"
 #include "rt_nonfinite.h"
 
 /* Function Definitions */
 /*
  * Arguments    : const emxArray_real_T *x
- *                int vlen
  * Return Type  : double
  */
-double blockedSummation(const emxArray_real_T *x, int vlen)
+double sum(const emxArray_real_T *x)
 {
   const double *x_data;
   double y;
   int ib;
   int k;
   x_data = x->data;
-  if ((x->size[0] == 0) || (vlen == 0)) {
+  if (x->size[1] == 0) {
     y = 0.0;
   } else {
     int firstBlockLength;
     int lastBlockLength;
     int nblocks;
-    if (vlen <= 1024) {
-      firstBlockLength = vlen;
+    if (x->size[1] <= 1024) {
+      firstBlockLength = x->size[1];
       lastBlockLength = 0;
       nblocks = 1;
     } else {
       firstBlockLength = 1024;
-      nblocks = vlen >> 10;
-      lastBlockLength = vlen - (nblocks << 10);
+      nblocks = (int)((unsigned int)x->size[1] >> 10);
+      lastBlockLength = x->size[1] - (nblocks << 10);
       if (lastBlockLength > 0) {
         nblocks++;
       } else {
@@ -69,7 +68,7 @@ double blockedSummation(const emxArray_real_T *x, int vlen)
 }
 
 /*
- * File trailer for blockedSummation.c
+ * File trailer for sum.c
  *
  * [EOF]
  */

@@ -86,7 +86,8 @@ def _pad_rows(rows: list[list[float]], fill: float | None) -> list[list[float | 
 
 def write_inputs(params: dict[str, Any], work_dir: Path) -> None:
     """
-    Write the seven input artifacts the C binary reads.
+    Write the seven input artifacts the C binary reads, plus the optional
+    start_design.csv warm start.
 
     `params` is the validated dict from validation.validate_payload().
     """
@@ -118,6 +119,11 @@ def write_inputs(params: dict[str, Any], work_dir: Path) -> None:
 
     # n_sizes.csv (1 x m)
     _write_row_vector(work_dir / "n_sizes.csv", params["n_sizes"])
+
+    # start_design.csv (optional warm start, v0.2.8): the binary uses it as
+    # the starting design of restart 1 when the file is present.
+    if params.get("start_design"):
+        _write_matrix(work_dir / "start_design.csv", params["start_design"])
 
     # config.txt
     cfg = work_dir / "config.txt"

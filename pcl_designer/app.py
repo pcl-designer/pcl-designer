@@ -52,6 +52,7 @@ def create_app() -> Flask:
                 "copula_family": params["copula_family"],
                 "seed": params["seed"],
                 "num_starts": params["num_starts"],
+                "warm_start": params["start_design"] is not None,
             },
         })
 

@@ -4,7 +4,7 @@
  * File: DesignWizardVn_App_GapPrimary.c
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 01-Oct-2026 20:44:50
+ * C/C++ source code generated on  : 03-Oct-2026 17:22:39
  */
 
 /* Include Files */
@@ -14,13 +14,17 @@
 #include "DesignWizardVn_App_GapPrimary_initialize.h"
 #include "DesignWizardVn_App_GapPrimary_types.h"
 #include "blockedSummation.h"
+#include "chol.h"
 #include "eml_mtimes_helper.h"
 #include "mldivide.h"
 #include "mod.h"
 #include "mtimes.h"
 #include "rand.h"
+#include "rng.h"
 #include "rt_nonfinite.h"
 #include "sort.h"
+#include "strcmp.h"
+#include "sum.h"
 #include "var.h"
 #include "xpotrf.h"
 #include "omp.h"
@@ -29,23 +33,6 @@
 #include <string.h>
 
 /* Variable Definitions */
-static const char cv[128] = {
-    '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\a',   '\b',
-    '\t',   '\n',   '\v',   '\f',   '\r',   '\x0e', '\x0f', '\x10', '\x11',
-    '\x12', '\x13', '\x14', '\x15', '\x16', '\x17', '\x18', '\x19', '\x1a',
-    '\x1b', '\x1c', '\x1d', '\x1e', '\x1f', ' ',    '!',    '\"',   '#',
-    '$',    '%',    '&',    '\'',   '(',    ')',    '*',    '+',    ',',
-    '-',    '.',    '/',    '0',    '1',    '2',    '3',    '4',    '5',
-    '6',    '7',    '8',    '9',    ':',    ';',    '<',    '=',    '>',
-    '?',    '@',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
-    'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',    'p',
-    'q',    'r',    's',    't',    'u',    'v',    'w',    'x',    'y',
-    'z',    '[',    '\\',   ']',    '^',    '_',    '`',    'a',    'b',
-    'c',    'd',    'e',    'f',    'g',    'h',    'i',    'j',    'k',
-    'l',    'm',    'n',    'o',    'p',    'q',    'r',    's',    't',
-    'u',    'v',    'w',    'x',    'y',    'z',    '{',    '|',    '}',
-    '~',    '\x7f'};
-
 static const double dv[16] = {
     -4.6887389393058179, -3.8694479048601225,  -3.176999161979956,
     -2.5462021578474809, -1.9517879909162539,  -1.3802585391988806,
@@ -83,28 +70,37 @@ static double b_copula_pmf_eta(const emxArray_real_T *y,
 static void binary_expand_op(emxArray_real_T *in1, int in2,
                              const emxArray_real_T *in3);
 
-static void binary_expand_op_1(emxArray_real_T *in1, int in2,
+static void binary_expand_op_1(double in1_data[], int in1_size[2],
+                               const emxArray_real_T *in2, int in3,
+                               const emxArray_real_T *in4, double in5, int in6,
+                               int in7);
+
+static void binary_expand_op_11(emxArray_real_T *in1, double in2,
+                                const emxArray_real_T *in3);
+
+static void binary_expand_op_2(double in1_data[], int in1_size[2],
+                               const emxArray_real_T *in2, int in3,
+                               const emxArray_real_T *in4, double in5, int in6);
+
+static void binary_expand_op_3(emxArray_real_T *in1, int in2,
                                const emxArray_real_T *in3,
                                const emxArray_real_T *in4);
 
-static void binary_expand_op_2(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_4(emxArray_real_T *in1, const emxArray_real_T *in2,
                                const emxArray_real_T *in3);
 
-static void binary_expand_op_3(emxArray_real_T *in1, double in2,
-                               const emxArray_real_T *in3);
-
-static void binary_expand_op_5(emxArray_real_T *in1, const emxArray_real_T *in2,
-                               double in3, const emxArray_real_T *in4,
-                               const emxArray_real_T *in5);
-
-static void binary_expand_op_6(emxArray_real_T *in1, double in2,
+static void binary_expand_op_5(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3);
 
 static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
-                               int in3, const emxArray_real_T *in4);
+                               double in3, const emxArray_real_T *in4,
+                               const emxArray_real_T *in5);
 
-static void binary_expand_op_9(emxArray_real_T *in1, double in2,
+static void binary_expand_op_8(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3);
+
+static void binary_expand_op_9(emxArray_real_T *in1, const emxArray_real_T *in2,
+                               int in3, const emxArray_real_T *in4);
 
 static void
 build_model_row(const double wp_lev_data[], const int wp_lev_size[2],
@@ -159,7 +155,8 @@ static int coordinate_exchange_otf(
     const int lambda_fixed_size[2], double copulaType, bool is_glmm_approx,
     bool is_glmm_exact, bool is_copula_pcl, bool is_copula_pcl_godambe,
     bool is_indep_glm, const emxArray_cell_wrap_0 *modelTerms,
-    double num_starts, double best_idx_data[], double *best_crit);
+    double num_starts, bool has_start, const emxArray_real_T *start_idx_vec,
+    double best_idx_data[], double *best_crit);
 
 static double copula_pmf_eta(const double y[2], const double xb[2],
                              const emxArray_real_T *alpha, double lam,
@@ -456,7 +453,7 @@ static void b_computeFisher_Copula(const emxArray_real_T *theta,
             I_data[i2] += n_outcomes_tmp * -X_pair_data[i2];
           }
         } else {
-          binary_expand_op_9(b_I, n_outcomes_tmp, Hess);
+          binary_expand_op_11(b_I, n_outcomes_tmp, Hess);
           I_data = b_I->data;
         }
       }
@@ -712,13 +709,160 @@ static void binary_expand_op(emxArray_real_T *in1, int in2,
 }
 
 /*
+ * Arguments    : double in1_data[]
+ *                int in1_size[2]
+ *                const emxArray_real_T *in2
+ *                int in3
+ *                const emxArray_real_T *in4
+ *                double in5
+ *                int in6
+ *                int in7
+ * Return Type  : void
+ */
+static void binary_expand_op_1(double in1_data[], int in1_size[2],
+                               const emxArray_real_T *in2, int in3,
+                               const emxArray_real_T *in4, double in5, int in6,
+                               int in7)
+{
+  const double *in2_data;
+  const double *in4_data;
+  int i;
+  int loop_ub;
+  int stride_0_1;
+  int stride_1_1;
+  in4_data = in4->data;
+  in2_data = in2->data;
+  in1_size[0] = 1;
+  i = (in7 - in6) + 1;
+  if (i == 1) {
+    loop_ub = in2->size[1];
+  } else {
+    loop_ub = i;
+  }
+  in1_size[1] = loop_ub;
+  stride_0_1 = (in2->size[1] != 1);
+  stride_1_1 = (i != 1);
+  for (i = 0; i < loop_ub; i++) {
+    in1_data[i] =
+        in2_data[in3 + in2->size[0] * (i * stride_0_1)] -
+        in4_data[((int)in5 + in4->size[0] * (in6 + i * stride_1_1)) - 1];
+  }
+}
+
+/*
+ * Arguments    : emxArray_real_T *in1
+ *                double in2
+ *                const emxArray_real_T *in3
+ * Return Type  : void
+ */
+static void binary_expand_op_11(emxArray_real_T *in1, double in2,
+                                const emxArray_real_T *in3)
+{
+  emxArray_real_T *b_in1;
+  const double *in3_data;
+  double *b_in1_data;
+  double *in1_data;
+  int aux_0_1;
+  int aux_1_1;
+  int b_loop_ub;
+  int i;
+  int i1;
+  int loop_ub;
+  int stride_0_0;
+  int stride_0_1;
+  int stride_1_0;
+  int stride_1_1;
+  in3_data = in3->data;
+  in1_data = in1->data;
+  emxInit_real_T(&b_in1, 2);
+  if (in3->size[0] == 1) {
+    loop_ub = in1->size[0];
+  } else {
+    loop_ub = in3->size[0];
+  }
+  i = b_in1->size[0] * b_in1->size[1];
+  b_in1->size[0] = loop_ub;
+  if (in3->size[1] == 1) {
+    b_loop_ub = in1->size[1];
+  } else {
+    b_loop_ub = in3->size[1];
+  }
+  b_in1->size[1] = b_loop_ub;
+  emxEnsureCapacity_real_T(b_in1, i);
+  b_in1_data = b_in1->data;
+  stride_0_0 = (in1->size[0] != 1);
+  stride_0_1 = (in1->size[1] != 1);
+  stride_1_0 = (in3->size[0] != 1);
+  stride_1_1 = (in3->size[1] != 1);
+  aux_0_1 = 0;
+  aux_1_1 = 0;
+  for (i = 0; i < b_loop_ub; i++) {
+    for (i1 = 0; i1 < loop_ub; i1++) {
+      b_in1_data[i1 + b_in1->size[0] * i] =
+          in1_data[i1 * stride_0_0 + in1->size[0] * aux_0_1] +
+          in2 * -in3_data[i1 * stride_1_0 + in3->size[0] * aux_1_1];
+    }
+    aux_1_1 += stride_1_1;
+    aux_0_1 += stride_0_1;
+  }
+  i = in1->size[0] * in1->size[1];
+  in1->size[0] = loop_ub;
+  in1->size[1] = b_loop_ub;
+  emxEnsureCapacity_real_T(in1, i);
+  in1_data = in1->data;
+  for (i = 0; i < b_loop_ub; i++) {
+    for (i1 = 0; i1 < loop_ub; i1++) {
+      in1_data[i1 + in1->size[0] * i] = b_in1_data[i1 + b_in1->size[0] * i];
+    }
+  }
+  emxFree_real_T(&b_in1);
+}
+
+/*
+ * Arguments    : double in1_data[]
+ *                int in1_size[2]
+ *                const emxArray_real_T *in2
+ *                int in3
+ *                const emxArray_real_T *in4
+ *                double in5
+ *                int in6
+ * Return Type  : void
+ */
+static void binary_expand_op_2(double in1_data[], int in1_size[2],
+                               const emxArray_real_T *in2, int in3,
+                               const emxArray_real_T *in4, double in5, int in6)
+{
+  const double *in2_data;
+  const double *in4_data;
+  int i;
+  int loop_ub;
+  int stride_0_1;
+  int stride_1_1;
+  in4_data = in4->data;
+  in2_data = in2->data;
+  in1_size[0] = 1;
+  if (in6 + 1 == 1) {
+    loop_ub = in2->size[1];
+  } else {
+    loop_ub = in6 + 1;
+  }
+  in1_size[1] = loop_ub;
+  stride_0_1 = (in2->size[1] != 1);
+  stride_1_1 = (in6 + 1 != 1);
+  for (i = 0; i < loop_ub; i++) {
+    in1_data[i] = in2_data[in3 + in2->size[0] * (i * stride_0_1)] -
+                  in4_data[((int)in5 + in4->size[0] * (i * stride_1_1)) - 1];
+  }
+}
+
+/*
  * Arguments    : emxArray_real_T *in1
  *                int in2
  *                const emxArray_real_T *in3
  *                const emxArray_real_T *in4
  * Return Type  : void
  */
-static void binary_expand_op_1(emxArray_real_T *in1, int in2,
+static void binary_expand_op_3(emxArray_real_T *in1, int in2,
                                const emxArray_real_T *in3,
                                const emxArray_real_T *in4)
 {
@@ -747,7 +891,7 @@ static void binary_expand_op_1(emxArray_real_T *in1, int in2,
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_2(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_4(emxArray_real_T *in1, const emxArray_real_T *in2,
                                const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -801,7 +945,7 @@ static void binary_expand_op_2(emxArray_real_T *in1, const emxArray_real_T *in2,
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_3(emxArray_real_T *in1, double in2,
+static void binary_expand_op_5(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -872,7 +1016,7 @@ static void binary_expand_op_3(emxArray_real_T *in1, double in2,
  *                const emxArray_real_T *in5
  * Return Type  : void
  */
-static void binary_expand_op_5(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
                                double in3, const emxArray_real_T *in4,
                                const emxArray_real_T *in5)
 {
@@ -933,7 +1077,7 @@ static void binary_expand_op_5(emxArray_real_T *in1, const emxArray_real_T *in2,
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_6(emxArray_real_T *in1, double in2,
+static void binary_expand_op_8(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -1016,7 +1160,7 @@ static void binary_expand_op_6(emxArray_real_T *in1, double in2,
  *                const emxArray_real_T *in4
  * Return Type  : void
  */
-static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_9(emxArray_real_T *in1, const emxArray_real_T *in2,
                                int in3, const emxArray_real_T *in4)
 {
   emxArray_real_T *b_in1;
@@ -1084,75 +1228,6 @@ static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
     aux_0_1 += stride_0_1;
   }
   emxFree_real_T(&b_in4);
-  i = in1->size[0] * in1->size[1];
-  in1->size[0] = loop_ub;
-  in1->size[1] = b_loop_ub;
-  emxEnsureCapacity_real_T(in1, i);
-  in1_data = in1->data;
-  for (i = 0; i < b_loop_ub; i++) {
-    for (i1 = 0; i1 < loop_ub; i1++) {
-      in1_data[i1 + in1->size[0] * i] = b_in1_data[i1 + b_in1->size[0] * i];
-    }
-  }
-  emxFree_real_T(&b_in1);
-}
-
-/*
- * Arguments    : emxArray_real_T *in1
- *                double in2
- *                const emxArray_real_T *in3
- * Return Type  : void
- */
-static void binary_expand_op_9(emxArray_real_T *in1, double in2,
-                               const emxArray_real_T *in3)
-{
-  emxArray_real_T *b_in1;
-  const double *in3_data;
-  double *b_in1_data;
-  double *in1_data;
-  int aux_0_1;
-  int aux_1_1;
-  int b_loop_ub;
-  int i;
-  int i1;
-  int loop_ub;
-  int stride_0_0;
-  int stride_0_1;
-  int stride_1_0;
-  int stride_1_1;
-  in3_data = in3->data;
-  in1_data = in1->data;
-  emxInit_real_T(&b_in1, 2);
-  if (in3->size[0] == 1) {
-    loop_ub = in1->size[0];
-  } else {
-    loop_ub = in3->size[0];
-  }
-  i = b_in1->size[0] * b_in1->size[1];
-  b_in1->size[0] = loop_ub;
-  if (in3->size[1] == 1) {
-    b_loop_ub = in1->size[1];
-  } else {
-    b_loop_ub = in3->size[1];
-  }
-  b_in1->size[1] = b_loop_ub;
-  emxEnsureCapacity_real_T(b_in1, i);
-  b_in1_data = b_in1->data;
-  stride_0_0 = (in1->size[0] != 1);
-  stride_0_1 = (in1->size[1] != 1);
-  stride_1_0 = (in3->size[0] != 1);
-  stride_1_1 = (in3->size[1] != 1);
-  aux_0_1 = 0;
-  aux_1_1 = 0;
-  for (i = 0; i < b_loop_ub; i++) {
-    for (i1 = 0; i1 < loop_ub; i1++) {
-      b_in1_data[i1 + b_in1->size[0] * i] =
-          in1_data[i1 * stride_0_0 + in1->size[0] * aux_0_1] +
-          in2 * -in3_data[i1 * stride_1_0 + in3->size[0] * aux_1_1];
-    }
-    aux_1_1 += stride_1_1;
-    aux_0_1 += stride_0_1;
-  }
   i = in1->size[0] * in1->size[1];
   in1->size[0] = loop_ub;
   in1->size[1] = b_loop_ub;
@@ -1719,7 +1794,7 @@ static void c_computeFisher_Copula(const emxArray_real_T *theta,
         I_data[i] += PrY_data[b_i] * allY_data[i];
       }
     } else {
-      binary_expand_op_7(b_I, PrY, b_i, Scores);
+      binary_expand_op_9(b_I, PrY, b_i, Scores);
       I_data = b_I->data;
     }
   }
@@ -2217,7 +2292,7 @@ static double computeCriterion_otf(
                 I_wp_data[i2] += dv1[kk] * alpha_data[i2];
               }
             } else {
-              binary_expand_op_3(I_wp, dv1[kk], I_cond);
+              binary_expand_op_5(I_wp, dv1[kk], I_cond);
               I_wp_data = I_wp->data;
             }
           }
@@ -2443,7 +2518,7 @@ static double computeCriterion_otf(
           }
           mldivide(Xwp, H_wp, r);
         } else {
-          binary_expand_op_5(r, I_wp, sp_val_idx, I_cond, H_wp);
+          binary_expand_op_7(r, I_wp, sp_val_idx, I_cond, H_wp);
         }
         mtimes(H_wp, r, I_wp);
         I_wp_data = I_wp->data;
@@ -2473,7 +2548,7 @@ static double computeCriterion_otf(
             I_wp_data[i] = Xwp_data[i];
           }
         } else {
-          binary_expand_op_4(I_wp);
+          binary_expand_op_6(I_wp);
           I_wp_data = I_wp->data;
         }
       } else if (is_copula_pcl) {
@@ -2975,7 +3050,7 @@ static void computeFisher_Copula(const emxArray_real_T *theta,
             I_data[i2] += a * alpha0_data[i2];
           }
         } else {
-          binary_expand_op_6(b_I, a, U);
+          binary_expand_op_8(b_I, a, U);
           I_data = b_I->data;
         }
       }
@@ -3440,7 +3515,7 @@ static void computeFisher_GLMM_Exact(const emxArray_real_T *theta,
         y_data[i] += PrY_data[iy] * allY_data[i];
       }
     } else {
-      binary_expand_op_7(b_I, PrY, iy, Scores);
+      binary_expand_op_9(b_I, PrY, iy, Scores);
       y_data = b_I->data;
     }
   }
@@ -3477,6 +3552,8 @@ static void computeFisher_GLMM_Exact(const emxArray_real_T *theta,
  *                bool is_indep_glm
  *                const emxArray_cell_wrap_0 *modelTerms
  *                double num_starts
+ *                bool has_start
+ *                const emxArray_real_T *start_idx_vec
  *                double best_idx_data[]
  *                double *best_crit
  * Return Type  : int
@@ -3492,7 +3569,8 @@ static int coordinate_exchange_otf(
     const int lambda_fixed_size[2], double copulaType, bool is_glmm_approx,
     bool is_glmm_exact, bool is_copula_pcl, bool is_copula_pcl_godambe,
     bool is_indep_glm, const emxArray_cell_wrap_0 *modelTerms,
-    double num_starts, double best_idx_data[], double *best_crit)
+    double num_starts, bool has_start, const emxArray_real_T *start_idx_vec,
+    double best_idx_data[], double *best_crit)
 {
   emxArray_real_T *best_idxs;
   emxArray_real_T *r;
@@ -3500,6 +3578,7 @@ static int coordinate_exchange_otf(
   double idx_data[5000];
   double best_crits_data[1024];
   const double *lb_data;
+  const double *start_idx_vec_data;
   const double *ub_data;
   double best_v_crit;
   double best_val;
@@ -3522,6 +3601,7 @@ static int coordinate_exchange_otf(
   int v;
   int val;
   bool improved;
+  start_idx_vec_data = start_idx_vec->data;
   ub_data = ub->data;
   lb_data = lb->data;
   num_starts = fmax(1.0, fmin(1024.0, rt_roundd_snf(num_starts)));
@@ -3564,7 +3644,7 @@ static int coordinate_exchange_otf(
         r1[i] *= ub_data[i] - lb_data[i];
       }
     } else {
-      binary_expand_op_2(r, ub, lb);
+      binary_expand_op_4(r, ub, lb);
       r1 = r->data;
     }
     nx = r->size[0];
@@ -3578,11 +3658,18 @@ static int coordinate_exchange_otf(
             lb_data[i] + r1[i];
       }
     } else {
-      binary_expand_op_1(start_designs, start_idx, lb, r);
+      binary_expand_op_3(start_designs, start_idx, lb, r);
       start_designs_data = start_designs->data;
     }
   }
   emxFree_real_T(&r);
+  if (has_start) {
+    nx = start_designs->size[0];
+    for (i = 0; i < nx; i++) {
+      start_designs_data[i] = start_idx_vec_data[i];
+    }
+    /*  warm start replaces restart 1 */
+  }
   nx = loop_ub_tmp - 1;
 #pragma omp parallel for num_threads(omp_get_max_threads()) private(           \
         new_crit, best_v_crit, best_val, iter, improved, current_crit,         \
@@ -4384,7 +4471,7 @@ static void univariateOrdinalFisher(double linpred,
           I_loc_data[i] += F_up * J_data[i];
         }
       } else {
-        binary_expand_op_6(I_loc, F_up, U_c);
+        binary_expand_op_8(I_loc, F_up, U_c);
         I_loc_data = I_loc->data;
       }
     }
@@ -4464,6 +4551,7 @@ static void univariateOrdinalFisher(double linpred,
  *                int lambda_fixed_size[2]
  *                double seed
  *                double num_starts
+ *                const emxArray_real_T *startX
  *                emxArray_real_T *optimalX
  *                double *optimalCrit
  * Return Type  : void
@@ -4478,7 +4566,8 @@ void DesignWizardVn_App_GapPrimary(
     int evalMethod_size[2], char crit_mode_data[], int crit_mode_size[2],
     double copulaType, double sigma2_fixed_data[], int sigma2_fixed_size[2],
     const double lambda_fixed_data[], int lambda_fixed_size[2], double seed,
-    double num_starts, emxArray_real_T *optimalX, double *optimalCrit)
+    double num_starts, const emxArray_real_T *startX, emxArray_real_T *optimalX,
+    double *optimalCrit)
 {
   static const char cv5[18] = {'c', 'o', 'p', 'u', 'l', 'a', '_', 'p', 'c',
                                'l', '_', 'g', 'o', 'd', 'a', 'm', 'b', 'e'};
@@ -4490,26 +4579,28 @@ void DesignWizardVn_App_GapPrimary(
                                'e', 'x', 'a', 'c', 't'};
   static const char cv4[10] = {'c', 'o', 'p', 'u', 'l',
                                'a', '_', 'p', 'c', 'l'};
-  static const char cv6[9] = {'i', 'n', 'd', 'e', 'p', '_', 'g', 'l', 'm'};
   static const char cv1[7] = {'a', 'v', 'e', 'r', 'a', 'g', 'e'};
-  emxArray_real_T *A;
-  emxArray_real_T *b_r;
   emxArray_real_T *idx_sp;
   emxArray_real_T *idx_wp;
+  emxArray_real_T *r;
   emxArray_real_T *r2;
   emxArray_real_T *r3;
+  emxArray_real_T *r4;
   emxArray_real_T *sp_combos;
+  emxArray_real_T *start_idx_vec;
   emxArray_real_T *thetaGrid;
   emxArray_real_T *thetaGrid_gap;
   emxArray_real_T *ub;
   emxArray_real_T *weights;
   emxArray_real_T *wp_combos;
   double idxOpt_data[5000];
+  double x_data[40];
   const double *priorCov_data;
   const double *priorMean_data;
+  const double *startX_data;
   double N;
   double num_pts;
-  double num_sp_combos;
+  double nvars;
   double p;
   double radius;
   double thetaGrid_tmp;
@@ -4522,18 +4613,21 @@ void DesignWizardVn_App_GapPrimary(
   double *wp_combos_data;
   int sp_combos_size[2];
   int wp_combos_size[2];
+  int x_size[2];
   int exitg1;
   int i;
-  int ib;
+  int i1;
+  int i2;
   int ibmat;
-  int jmax;
-  int k;
-  int lastBlockLength;
-  int nblocks;
-  unsigned int r;
+  int jcol;
+  int loop_ub;
+  int loop_ub_tmp;
+  int sub;
+  int w;
+  int wp;
+  bool has_start;
   bool is_copula_pcl;
   bool is_copula_pcl_godambe;
-  bool is_glmm;
   bool is_glmm_approx;
   bool is_glmm_exact;
   bool is_indep_glm;
@@ -4543,6 +4637,7 @@ void DesignWizardVn_App_GapPrimary(
   if (!isInitialized_DesignWizardVn_App_GapPrimary) {
     DesignWizardVn_App_GapPrimary_initialize();
   }
+  startX_data = startX->data;
   priorCov_data = priorCov->data;
   priorMean_data = priorMean->data;
   n_data = n->data;
@@ -4621,6 +4716,7 @@ void DesignWizardVn_App_GapPrimary(
    */
   /*  ====================== DEFAULTS & ROUTING ====================== */
   if (evalMethod_size[1] == 0) {
+    evalMethod_size[0] = 1;
     evalMethod_size[1] = 11;
     for (i = 0; i < 11; i++) {
       evalMethod_data[i] = b_cv[i];
@@ -4641,37 +4737,18 @@ void DesignWizardVn_App_GapPrimary(
     lambda_fixed_size[0] = 0;
     lambda_fixed_size[1] = 0;
   }
-  if (seed < 4.294967296E+9) {
-    if (seed >= 0.0) {
-      r = (unsigned int)seed;
-    } else {
-      r = 0U;
-    }
-  } else if (seed >= 4.294967296E+9) {
-    r = MAX_uint32_T;
-  } else {
-    r = 0U;
-  }
-  if (r == 0U) {
-    r = 5489U;
-  }
-  state[0] = r;
-  for (jmax = 0; jmax < 623; jmax++) {
-    r = ((r ^ r >> 30U) * 1812433253U + (unsigned int)jmax) + 1U;
-    state[jmax + 1] = r;
-  }
-  state[624] = 624U;
+  rng(seed);
   is_glmm_approx = false;
   if (evalMethod_size[1] == 11) {
-    jmax = 0;
+    ibmat = 0;
     do {
       exitg1 = 0;
-      if (jmax < 11) {
-        if (cv[(unsigned char)evalMethod_data[jmax] & 127] !=
-            cv[(int)cv2[jmax]]) {
+      if (ibmat < 11) {
+        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
+            cv[(int)cv2[ibmat]]) {
           exitg1 = 1;
         } else {
-          jmax++;
+          ibmat++;
         }
       } else {
         is_glmm_approx = true;
@@ -4681,15 +4758,15 @@ void DesignWizardVn_App_GapPrimary(
   }
   is_glmm_exact = false;
   if (evalMethod_size[1] == 10) {
-    jmax = 0;
+    ibmat = 0;
     do {
       exitg1 = 0;
-      if (jmax < 10) {
-        if (cv[(unsigned char)evalMethod_data[jmax] & 127] !=
-            cv[(int)cv3[jmax]]) {
+      if (ibmat < 10) {
+        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
+            cv[(int)cv3[ibmat]]) {
           exitg1 = 1;
         } else {
-          jmax++;
+          ibmat++;
         }
       } else {
         is_glmm_exact = true;
@@ -4699,15 +4776,15 @@ void DesignWizardVn_App_GapPrimary(
   }
   is_copula_pcl = false;
   if (evalMethod_size[1] == 10) {
-    jmax = 0;
+    ibmat = 0;
     do {
       exitg1 = 0;
-      if (jmax < 10) {
-        if (cv[(unsigned char)evalMethod_data[jmax] & 127] !=
-            cv[(int)cv4[jmax]]) {
+      if (ibmat < 10) {
+        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
+            cv[(int)cv4[ibmat]]) {
           exitg1 = 1;
         } else {
-          jmax++;
+          ibmat++;
         }
       } else {
         is_copula_pcl = true;
@@ -4717,15 +4794,15 @@ void DesignWizardVn_App_GapPrimary(
   }
   is_copula_pcl_godambe = false;
   if (evalMethod_size[1] == 18) {
-    jmax = 0;
+    ibmat = 0;
     do {
       exitg1 = 0;
-      if (jmax < 18) {
-        if (cv[(unsigned char)evalMethod_data[jmax] & 127] !=
-            cv[(int)cv5[jmax]]) {
+      if (ibmat < 18) {
+        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
+            cv[(int)cv5[ibmat]]) {
           exitg1 = 1;
         } else {
-          jmax++;
+          ibmat++;
         }
       } else {
         is_copula_pcl_godambe = true;
@@ -4733,28 +4810,11 @@ void DesignWizardVn_App_GapPrimary(
       }
     } while (exitg1 == 0);
   }
-  is_indep_glm = false;
-  if (evalMethod_size[1] == 9) {
-    jmax = 0;
-    do {
-      exitg1 = 0;
-      if (jmax < 9) {
-        if (cv[(unsigned char)evalMethod_data[jmax] & 127] !=
-            cv[(int)cv6[jmax]]) {
-          exitg1 = 1;
-        } else {
-          jmax++;
-        }
-      } else {
-        is_indep_glm = true;
-        exitg1 = 1;
-      }
-    } while (exitg1 == 0);
-  }
+  is_indep_glm = b_strcmp(evalMethod_data, evalMethod_size);
   if (is_glmm_approx || is_glmm_exact) {
-    is_glmm = true;
+    has_start = true;
   } else {
-    is_glmm = false;
+    has_start = false;
   }
   num_pts = rt_roundd_snf(K);
   if (num_pts < 2.147483648E+9) {
@@ -4779,7 +4839,7 @@ void DesignWizardVn_App_GapPrimary(
   } else if (is_indep_glm) {
     /*  Independence GLM has no variance and no dependence parameter */
     p = ((double)i - 1.0) + (double)modelTerms->size[1];
-  } else if (is_glmm) {
+  } else if (has_start) {
     if ((sigma2_fixed_size[0] == 0) || (sigma2_fixed_size[1] == 0)) {
       p = (((double)i - 1.0) + (double)modelTerms->size[1]) + 1.0;
     } else {
@@ -4802,27 +4862,27 @@ void DesignWizardVn_App_GapPrimary(
   /*  alpha_1 < alpha_2 < alpha_3 hold by construction at every node. */
   num_pts = 2.0 * p;
   emxInit_real_T(&thetaGrid, 2);
-  nblocks = (int)num_pts;
-  k = thetaGrid->size[0] * thetaGrid->size[1];
+  loop_ub_tmp = (int)num_pts;
+  i1 = thetaGrid->size[0] * thetaGrid->size[1];
   thetaGrid->size[0] = (int)num_pts;
-  ib = (int)p;
+  i2 = (int)p;
   thetaGrid->size[1] = (int)p;
-  emxEnsureCapacity_real_T(thetaGrid, k);
+  emxEnsureCapacity_real_T(thetaGrid, i1);
   thetaGrid_data = thetaGrid->data;
-  jmax = (int)num_pts * (int)p;
-  for (k = 0; k < jmax; k++) {
-    thetaGrid_data[k] = 0.0;
+  loop_ub = (int)num_pts * (int)p;
+  for (i1 = 0; i1 < loop_ub; i1++) {
+    thetaGrid_data[i1] = 0.0;
   }
   emxInit_real_T(&weights, 1);
-  k = weights->size[0];
+  i1 = weights->size[0];
   weights->size[0] = (int)num_pts;
-  emxEnsureCapacity_real_T(weights, k);
+  emxEnsureCapacity_real_T(weights, i1);
   ub_data = weights->data;
-  for (k = 0; k < nblocks; k++) {
-    ub_data[k] = 1.0 / num_pts;
+  for (i1 = 0; i1 < loop_ub_tmp; i1++) {
+    ub_data[i1] = 1.0 / num_pts;
   }
   radius = sqrt(p);
-  for (ibmat = 0; ibmat < ib; ibmat++) {
+  for (ibmat = 0; ibmat < i2; ibmat++) {
     thetaGrid_tmp = 2.0 * ((double)ibmat + 1.0);
     thetaGrid_data[((int)(thetaGrid_tmp - 1.0) + thetaGrid->size[0] * ibmat) -
                    1] = radius;
@@ -4830,63 +4890,44 @@ void DesignWizardVn_App_GapPrimary(
         -radius;
   }
   emxInit_real_T(&thetaGrid_gap, 2);
-  k = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
+  i1 = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
   thetaGrid_gap->size[0] = (int)num_pts;
-  ib = priorMean->size[1];
+  i2 = priorMean->size[1];
   thetaGrid_gap->size[1] = priorMean->size[1];
-  emxEnsureCapacity_real_T(thetaGrid_gap, k);
+  emxEnsureCapacity_real_T(thetaGrid_gap, i1);
   thetaGrid_gap_data = thetaGrid_gap->data;
-  for (jmax = 0; jmax < ib; jmax++) {
-    ibmat = jmax * thetaGrid->size[0];
-    for (lastBlockLength = 0; lastBlockLength < nblocks; lastBlockLength++) {
-      thetaGrid_gap_data[ibmat + lastBlockLength] = priorMean_data[jmax];
+  for (jcol = 0; jcol < i2; jcol++) {
+    ibmat = jcol * thetaGrid->size[0];
+    for (w = 0; w < loop_ub_tmp; w++) {
+      thetaGrid_gap_data[ibmat + w] = priorMean_data[jcol];
     }
   }
-  emxInit_real_T(&A, 2);
-  k = A->size[0] * A->size[1];
-  A->size[0] = priorCov->size[0];
-  A->size[1] = priorCov->size[1];
-  emxEnsureCapacity_real_T(A, k);
-  ub_data = A->data;
-  jmax = priorCov->size[0] * priorCov->size[1];
-  for (k = 0; k < jmax; k++) {
-    ub_data[k] = priorCov_data[k];
+  emxInit_real_T(&r, 2);
+  i1 = r->size[0] * r->size[1];
+  r->size[0] = priorCov->size[0];
+  r->size[1] = priorCov->size[1];
+  emxEnsureCapacity_real_T(r, i1);
+  r1 = r->data;
+  loop_ub = priorCov->size[0] * priorCov->size[1];
+  for (i1 = 0; i1 < loop_ub; i1++) {
+    r1[i1] = priorCov_data[i1];
   }
-  jmax = priorCov->size[0];
-  ibmat = priorCov->size[1];
-  if (jmax <= ibmat) {
-    ibmat = jmax;
-  }
-  if (ibmat != 0) {
-    jmax = xpotrf(ibmat, A, priorCov->size[0]);
-    ub_data = A->data;
-    if (jmax == 0) {
-      jmax = ibmat;
-    } else {
-      jmax--;
-    }
-    for (nblocks = 0; nblocks <= jmax - 2; nblocks++) {
-      k = nblocks + 2;
-      for (ibmat = k; ibmat <= jmax; ibmat++) {
-        ub_data[(ibmat + A->size[0] * nblocks) - 1] = 0.0;
-      }
-    }
-  }
-  emxInit_real_T(&b_r, 2);
-  mtimes(thetaGrid, A, b_r);
-  r1 = b_r->data;
-  emxFree_real_T(&A);
-  if ((thetaGrid_gap->size[0] == b_r->size[0]) &&
-      (thetaGrid_gap->size[1] == b_r->size[1])) {
-    jmax = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-    for (k = 0; k < jmax; k++) {
-      thetaGrid_gap_data[k] += r1[k];
+  chol(r);
+  emxInit_real_T(&r2, 2);
+  mtimes(thetaGrid, r, r2);
+  r1 = r2->data;
+  emxFree_real_T(&r);
+  if ((thetaGrid_gap->size[0] == r2->size[0]) &&
+      (thetaGrid_gap->size[1] == r2->size[1])) {
+    loop_ub = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
+    for (i1 = 0; i1 < loop_ub; i1++) {
+      thetaGrid_gap_data[i1] += r1[i1];
     }
   } else {
-    plus(thetaGrid_gap, b_r);
+    plus(thetaGrid_gap, r2);
     thetaGrid_gap_data = thetaGrid_gap->data;
   }
-  emxFree_real_T(&b_r);
+  emxFree_real_T(&r2);
   /*  Gap-to-cutpoint transformation, generalized to arbitrary K: */
   /*    thetaGrid(:, 1)    = alpha_1                          = thetaGrid_gap(:,
    * 1) */
@@ -4895,169 +4936,262 @@ void DesignWizardVn_App_GapPrimary(
   /*    thetaGrid(:, k+1:p) = beta                            = thetaGrid_gap(:,
    * k+1:p), k=num_alphas */
   /*  This makes alpha_1 < alpha_2 < ... < alpha_{K-1} hold by construction. */
-  jmax = thetaGrid_gap->size[0];
-  k = thetaGrid->size[0] * thetaGrid->size[1];
+  loop_ub = thetaGrid_gap->size[0];
+  i1 = thetaGrid->size[0] * thetaGrid->size[1];
   thetaGrid->size[0] = thetaGrid_gap->size[0];
   thetaGrid->size[1] = thetaGrid_gap->size[1];
-  emxEnsureCapacity_real_T(thetaGrid, k);
+  emxEnsureCapacity_real_T(thetaGrid, i1);
   thetaGrid_data = thetaGrid->data;
   ibmat = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-  for (k = 0; k < ibmat; k++) {
-    thetaGrid_data[k] = thetaGrid_gap_data[k];
+  for (i1 = 0; i1 < ibmat; i1++) {
+    thetaGrid_data[i1] = thetaGrid_gap_data[i1];
   }
   /*  allocate with same shape */
-  for (k = 0; k < jmax; k++) {
-    thetaGrid_data[k] = thetaGrid_gap_data[k];
+  for (i1 = 0; i1 < loop_ub; i1++) {
+    thetaGrid_data[i1] = thetaGrid_gap_data[i1];
   }
   emxInit_real_T(&ub, 1);
-  for (nblocks = 0; nblocks <= i - 3; nblocks++) {
-    k = ub->size[0];
-    ub->size[0] = jmax;
-    emxEnsureCapacity_real_T(ub, k);
+  for (w = 0; w <= i - 3; w++) {
+    i1 = ub->size[0];
+    ub->size[0] = loop_ub;
+    emxEnsureCapacity_real_T(ub, i1);
     ub_data = ub->data;
-    for (k = 0; k < jmax; k++) {
-      ub_data[k] =
-          exp(thetaGrid_gap_data[k + thetaGrid_gap->size[0] * (nblocks + 1)]);
+    for (ibmat = 0; ibmat < loop_ub; ibmat++) {
+      ub_data[ibmat] =
+          exp(thetaGrid_gap_data[ibmat + thetaGrid_gap->size[0] * (w + 1)]);
     }
     if (thetaGrid->size[0] == ub->size[0]) {
       ibmat = thetaGrid->size[0];
-      k = ub->size[0];
+      i1 = ub->size[0];
       ub->size[0] = thetaGrid->size[0];
-      emxEnsureCapacity_real_T(ub, k);
+      emxEnsureCapacity_real_T(ub, i1);
       ub_data = ub->data;
-      for (k = 0; k < ibmat; k++) {
-        ub_data[k] += thetaGrid_data[k + thetaGrid->size[0] * nblocks];
+      for (i1 = 0; i1 < ibmat; i1++) {
+        ub_data[i1] += thetaGrid_data[i1 + thetaGrid->size[0] * w];
       }
-      for (k = 0; k < ibmat; k++) {
-        thetaGrid_data[k + thetaGrid->size[0] * (nblocks + 1)] = ub_data[k];
+      for (i1 = 0; i1 < ibmat; i1++) {
+        thetaGrid_data[i1 + thetaGrid->size[0] * (w + 1)] = ub_data[i1];
       }
     } else {
-      binary_expand_op(thetaGrid, nblocks, ub);
+      binary_expand_op(thetaGrid, w, ub);
       thetaGrid_data = thetaGrid->data;
     }
   }
   /*  regression-coefficient block: unchanged */
   if (((double)i - 1.0) + 1.0 > p) {
-    k = 0;
-    ib = 0;
-    ibmat = 0;
+    i1 = 0;
+    i2 = 0;
+    jcol = 0;
   } else {
-    k = (int)(((double)i - 1.0) + 1.0) - 1;
-    ib = (int)p;
-    ibmat = k;
+    i1 = (int)(((double)i - 1.0) + 1.0) - 1;
+    i2 = (int)p;
+    jcol = i1;
   }
-  nblocks = ib - k;
-  for (ib = 0; ib < nblocks; ib++) {
-    for (lastBlockLength = 0; lastBlockLength < jmax; lastBlockLength++) {
-      thetaGrid_gap_data[lastBlockLength + jmax * ib] =
-          thetaGrid_gap_data[lastBlockLength +
-                             thetaGrid_gap->size[0] * (k + ib)];
+  loop_ub_tmp = i2 - i1;
+  for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+    for (ibmat = 0; ibmat < loop_ub; ibmat++) {
+      thetaGrid_gap_data[ibmat + loop_ub * i2] =
+          thetaGrid_gap_data[ibmat + thetaGrid_gap->size[0] * (i1 + i2)];
     }
   }
-  k = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-  thetaGrid_gap->size[1] = nblocks;
-  emxEnsureCapacity_real_T(thetaGrid_gap, k);
+  i1 = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
+  thetaGrid_gap->size[1] = loop_ub_tmp;
+  emxEnsureCapacity_real_T(thetaGrid_gap, i1);
   thetaGrid_gap_data = thetaGrid_gap->data;
-  jmax = thetaGrid->size[0];
-  for (k = 0; k < nblocks; k++) {
-    for (ib = 0; ib < jmax; ib++) {
-      thetaGrid_data[ib + thetaGrid->size[0] * (ibmat + k)] =
-          thetaGrid_gap_data[ib + jmax * k];
+  ibmat = thetaGrid->size[0];
+  for (i1 = 0; i1 < loop_ub_tmp; i1++) {
+    for (i2 = 0; i2 < ibmat; i2++) {
+      thetaGrid_data[i2 + thetaGrid->size[0] * (jcol + i1)] =
+          thetaGrid_gap_data[i2 + ibmat * i1];
     }
   }
   emxFree_real_T(&thetaGrid_gap);
   emxInit_real_T(&wp_combos, 2);
-  thetaGrid_tmp =
-      generate_combos(wp_levelSets_data, wp_levelSets_size, wp_combos);
+  radius = generate_combos(wp_levelSets_data, wp_levelSets_size, wp_combos);
   wp_combos_data = wp_combos->data;
   emxInit_real_T(&sp_combos, 2);
-  num_sp_combos =
+  thetaGrid_tmp =
       generate_combos(sp_levelSets_data, sp_levelSets_size, sp_combos);
   sp_combos_data = sp_combos->data;
   /*  ====================== UNBALANCED SIZING ====================== */
   /*  Ensure n is explicitly a 1 x m row vector to match coder signature */
   if (n->size[1] == 1) {
     num_pts = n_data[0];
-    k = n->size[0] * n->size[1];
+    i1 = n->size[0] * n->size[1];
     n->size[0] = 1;
-    ib = (int)m;
+    i2 = (int)m;
     n->size[1] = (int)m;
-    emxEnsureCapacity_real_T(n, k);
+    emxEnsureCapacity_real_T(n, i1);
     n_data = n->data;
-    for (ibmat = 0; ibmat < ib; ibmat++) {
+    for (ibmat = 0; ibmat < i2; ibmat++) {
       n_data[ibmat] = num_pts;
     }
   }
-  if (n->size[1] == 0) {
-    N = 0.0;
-  } else {
-    if (n->size[1] <= 1024) {
-      ibmat = n->size[1];
-      lastBlockLength = 0;
-      nblocks = 1;
-    } else {
-      ibmat = 1024;
-      nblocks = (int)((unsigned int)n->size[1] >> 10);
-      lastBlockLength = n->size[1] - (nblocks << 10);
-      if (lastBlockLength > 0) {
-        nblocks++;
-      } else {
-        lastBlockLength = 1024;
-      }
-    }
-    N = n_data[0];
-    for (k = 2; k <= ibmat; k++) {
-      N += n_data[k - 1];
-    }
-    for (ib = 2; ib <= nblocks; ib++) {
-      jmax = (ib - 1) << 10;
-      num_pts = n_data[jmax];
-      if (ib == nblocks) {
-        ibmat = lastBlockLength;
-      } else {
-        ibmat = 1024;
-      }
-      for (k = 2; k <= ibmat; k++) {
-        num_pts += n_data[(jmax + k) - 1];
-      }
-      N += num_pts;
-    }
-  }
+  N = sum(n);
   /*  ====================== OPTIMIZER SETUP ====================== */
-  radius = m + N;
-  nblocks = (int)radius;
-  k = ub->size[0];
-  ub->size[0] = (int)radius;
-  emxEnsureCapacity_real_T(ub, k);
+  nvars = m + N;
+  loop_ub_tmp = (int)nvars;
+  i1 = ub->size[0];
+  ub->size[0] = (int)nvars;
+  emxEnsureCapacity_real_T(ub, i1);
   ub_data = ub->data;
-  for (k = 0; k < nblocks; k++) {
-    ub_data[k] = 0.0;
+  for (i1 = 0; i1 < loop_ub_tmp; i1++) {
+    ub_data[i1] = 0.0;
   }
-  k = (int)m;
-  for (ibmat = 0; ibmat < k; ibmat++) {
-    ub_data[ibmat] = thetaGrid_tmp;
+  i1 = (int)m;
+  for (ibmat = 0; ibmat < i1; ibmat++) {
+    ub_data[ibmat] = radius;
   }
-  ib = (int)(radius + (1.0 - (m + 1.0)));
-  for (ibmat = 0; ibmat < ib; ibmat++) {
-    ub_data[(int)((m + 1.0) + (double)ibmat) - 1] = num_sp_combos;
+  i2 = (int)(nvars + (1.0 - (m + 1.0)));
+  for (ibmat = 0; ibmat < i2; ibmat++) {
+    ub_data[(int)((m + 1.0) + (double)ibmat) - 1] = thetaGrid_tmp;
   }
-  emxInit_real_T(&r2, 1);
-  ib = r2->size[0];
-  r2->size[0] = (int)radius;
-  emxEnsureCapacity_real_T(r2, ib);
-  r1 = r2->data;
-  for (ib = 0; ib < nblocks; ib++) {
-    r1[ib] = 1.0;
+  /*  v0.2.8 (warm start): an optional N x (w+s) starting design in factor */
+  /*  levels (whole-plot factors first, rows grouped by whole plot) replaces */
+  /*  the random starting design of restart 1. The remaining restarts keep */
+  /*  their random starts, so the random stream is unchanged. */
+  emxInit_real_T(&start_idx_vec, 1);
+  i2 = start_idx_vec->size[0];
+  start_idx_vec->size[0] = (int)nvars;
+  emxEnsureCapacity_real_T(start_idx_vec, i2);
+  ub_data = start_idx_vec->data;
+  for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+    ub_data[i2] = 0.0;
+  }
+  has_start = ((startX->size[0] != 0) && (startX->size[1] != 0));
+  if (has_start) {
+    /*  Map a starting design in factor levels (N rows; whole-plot factor */
+    /*  columns first, then sub-plot factor columns) to the CE index vector */
+    /*  [whole-plot combo per block; sub-plot combo per run]. */
+    w = wp_combos->size[1];
+    i2 = start_idx_vec->size[0];
+    start_idx_vec->size[0] = (int)nvars;
+    emxEnsureCapacity_real_T(start_idx_vec, i2);
+    ub_data = start_idx_vec->data;
+    for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+      ub_data[i2] = 0.0;
+    }
+    radius = 1.0;
+    for (wp = 0; wp < i1; wp++) {
+      int c;
+      bool b_x_data[40];
+      bool exitg2;
+      bool exitg3;
+      bool y;
+      ub_data[wp] = 0.0;
+      c = 0;
+      exitg2 = false;
+      while ((!exitg2) && (c <= wp_combos->size[0] - 1)) {
+        if (wp_combos->size[1] == w) {
+          x_size[0] = 1;
+          loop_ub = wp_combos->size[1];
+          x_size[1] = wp_combos->size[1];
+          for (i2 = 0; i2 < loop_ub; i2++) {
+            x_data[i2] = wp_combos_data[c + wp_combos->size[0] * i2] -
+                         startX_data[((int)radius + startX->size[0] * i2) - 1];
+          }
+        } else {
+          binary_expand_op_2(x_data, x_size, wp_combos, c, startX, radius,
+                             w - 1);
+        }
+        loop_ub = x_size[1];
+        jcol = x_size[1];
+        for (ibmat = 0; ibmat < loop_ub; ibmat++) {
+          b_x_data[ibmat] = (fabs(x_data[ibmat]) < 1.0E-9);
+        }
+        y = true;
+        ibmat = 1;
+        exitg3 = false;
+        while ((!exitg3) && (ibmat <= jcol)) {
+          if (!b_x_data[ibmat - 1]) {
+            y = false;
+            exitg3 = true;
+          } else {
+            ibmat++;
+          }
+        }
+        if (y) {
+          ub_data[wp] = (double)c + 1.0;
+          exitg2 = true;
+        } else {
+          c++;
+        }
+      }
+      i2 = (int)n_data[wp];
+      for (sub = 0; sub < i2; sub++) {
+        int start_idx_vec_tmp;
+        num_pts = (radius + ((double)sub + 1.0)) - 1.0;
+        start_idx_vec_tmp = (int)(m + num_pts) - 1;
+        ub_data[start_idx_vec_tmp] = 0.0;
+        c = 0;
+        exitg2 = false;
+        while ((!exitg2) && (c <= sp_combos->size[0] - 1)) {
+          jcol = w + sp_combos->size[1];
+          if (w + 1 > jcol) {
+            ibmat = 0;
+            jcol = 0;
+          } else {
+            ibmat = w;
+          }
+          if (sp_combos->size[1] == jcol - ibmat) {
+            x_size[0] = 1;
+            loop_ub = sp_combos->size[1];
+            x_size[1] = sp_combos->size[1];
+            for (jcol = 0; jcol < loop_ub; jcol++) {
+              x_data[jcol] = sp_combos_data[c + sp_combos->size[0] * jcol] -
+                             startX_data[((int)num_pts +
+                                          startX->size[0] * (ibmat + jcol)) -
+                                         1];
+            }
+          } else {
+            binary_expand_op_1(x_data, x_size, sp_combos, c, startX, num_pts,
+                               ibmat, jcol - 1);
+          }
+          loop_ub = x_size[1];
+          jcol = x_size[1];
+          for (ibmat = 0; ibmat < loop_ub; ibmat++) {
+            b_x_data[ibmat] = (fabs(x_data[ibmat]) < 1.0E-9);
+          }
+          y = true;
+          ibmat = 1;
+          exitg3 = false;
+          while ((!exitg3) && (ibmat <= jcol)) {
+            if (!b_x_data[ibmat - 1]) {
+              y = false;
+              exitg3 = true;
+            } else {
+              ibmat++;
+            }
+          }
+          if (y) {
+            ub_data[start_idx_vec_tmp] = (double)c + 1.0;
+            exitg2 = true;
+          } else {
+            c++;
+          }
+        }
+      }
+      radius += n_data[wp];
+    }
+  }
+  emxInit_real_T(&r3, 1);
+  i2 = r3->size[0];
+  r3->size[0] = (int)nvars;
+  emxEnsureCapacity_real_T(r3, i2);
+  r1 = r3->data;
+  for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+    r1[i2] = 1.0;
   }
   coordinate_exchange_otf(
-      m, n, N, weights, p, crit_mode_data, crit_mode_size, radius, r2, ub,
+      m, n, N, weights, p, crit_mode_data, crit_mode_size, nvars, r3, ub,
       wp_combos, sp_combos, thetaGrid, i, modelTerms->size[1],
       sigma2_fixed_data, sigma2_fixed_size, lambda_fixed_data,
       lambda_fixed_size, copulaType, is_glmm_approx, is_glmm_exact,
       is_copula_pcl, is_copula_pcl_godambe, is_indep_glm, modelTerms,
-      fmax(1.0, fmin(1024.0, rt_roundd_snf(num_starts))), idxOpt_data,
-      &num_pts);
-  emxFree_real_T(&r2);
+      fmax(1.0, fmin(1024.0, rt_roundd_snf(num_starts))), has_start,
+      start_idx_vec, idxOpt_data, &num_pts);
+  emxFree_real_T(&r3);
+  emxFree_real_T(&start_idx_vec);
   emxFree_real_T(&ub);
   *optimalCrit = computeCriterion_otf(
       idxOpt_data, m, n, N, weights, p, crit_mode_data, crit_mode_size,
@@ -5072,21 +5206,21 @@ void DesignWizardVn_App_GapPrimary(
   idx_wp->size[0] = (int)m;
   emxEnsureCapacity_real_T(idx_wp, i);
   ub_data = idx_wp->data;
-  for (ibmat = 0; ibmat < k; ibmat++) {
+  for (ibmat = 0; ibmat < i1; ibmat++) {
     ub_data[ibmat] = idxOpt_data[ibmat];
   }
   i = (int)N;
   emxInit_real_T(&idx_sp, 1);
-  ib = idx_sp->size[0];
+  i2 = idx_sp->size[0];
   idx_sp->size[0] = (int)N;
-  emxEnsureCapacity_real_T(idx_sp, ib);
+  emxEnsureCapacity_real_T(idx_sp, i2);
   thetaGrid_data = idx_sp->data;
   for (ibmat = 0; ibmat < i; ibmat++) {
     thetaGrid_data[ibmat] = idxOpt_data[(int)(m + ((double)ibmat + 1.0)) - 1];
   }
   i = optimalX->size[0] * optimalX->size[1];
   optimalX->size[0] = (int)N;
-  jmax = modelTerms->size[1];
+  loop_ub = modelTerms->size[1];
   optimalX->size[1] = modelTerms->size[1];
   emxEnsureCapacity_real_T(optimalX, i);
   thetaGrid_gap_data = optimalX->data;
@@ -5094,42 +5228,43 @@ void DesignWizardVn_App_GapPrimary(
   for (i = 0; i < ibmat; i++) {
     thetaGrid_gap_data[i] = 0.0;
   }
-  num_pts = 1.0;
-  emxInit_real_T(&r3, 2);
-  for (ibmat = 0; ibmat < k; ibmat++) {
-    i = (int)n_data[ibmat];
+  radius = 1.0;
+  emxInit_real_T(&r4, 2);
+  for (wp = 0; wp < i1; wp++) {
+    i = (int)n_data[wp];
     if (i - 1 >= 0) {
       wp_combos_size[0] = 1;
       sp_combos_size[0] = 1;
     }
-    for (lastBlockLength = 0; lastBlockLength < i; lastBlockLength++) {
+    for (sub = 0; sub < i; sub++) {
       double b_sp_combos_data[20];
       double b_wp_combos_data[20];
-      radius = (num_pts + ((double)lastBlockLength + 1.0)) - 1.0;
-      nblocks = wp_combos->size[1];
+      num_pts = (radius + ((double)sub + 1.0)) - 1.0;
+      loop_ub_tmp = wp_combos->size[1];
       wp_combos_size[1] = wp_combos->size[1];
-      for (ib = 0; ib < nblocks; ib++) {
-        b_wp_combos_data[ib] =
-            wp_combos_data[((int)ub_data[ibmat] + wp_combos->size[0] * ib) - 1];
+      for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+        b_wp_combos_data[i2] =
+            wp_combos_data[((int)ub_data[wp] + wp_combos->size[0] * i2) - 1];
       }
-      nblocks = sp_combos->size[1];
+      loop_ub_tmp = sp_combos->size[1];
       sp_combos_size[1] = sp_combos->size[1];
-      for (ib = 0; ib < nblocks; ib++) {
-        b_sp_combos_data[ib] =
-            sp_combos_data[((int)thetaGrid_data[(int)radius - 1] +
-                            sp_combos->size[0] * ib) -
+      for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+        b_sp_combos_data[i2] =
+            sp_combos_data[((int)thetaGrid_data[(int)num_pts - 1] +
+                            sp_combos->size[0] * i2) -
                            1];
       }
       build_model_row(b_wp_combos_data, wp_combos_size, b_sp_combos_data,
-                      sp_combos_size, modelTerms, r3);
-      r1 = r3->data;
-      for (ib = 0; ib < jmax; ib++) {
-        thetaGrid_gap_data[((int)radius + optimalX->size[0] * ib) - 1] = r1[ib];
+                      sp_combos_size, modelTerms, r4);
+      r1 = r4->data;
+      for (i2 = 0; i2 < loop_ub; i2++) {
+        thetaGrid_gap_data[((int)num_pts + optimalX->size[0] * i2) - 1] =
+            r1[i2];
       }
     }
-    num_pts += n_data[ibmat];
+    radius += n_data[wp];
   }
-  emxFree_real_T(&r3);
+  emxFree_real_T(&r4);
   emxFree_real_T(&idx_sp);
   emxFree_real_T(&idx_wp);
   emxFree_real_T(&sp_combos);

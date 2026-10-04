@@ -296,3 +296,52 @@ def test_lambda_must_be_positive():
     payload["lambda_fixed"] = 0.0
     with pytest.raises(ValidationError, match="lambda_fixed"):
         validate_payload(payload)
+
+
+# --------------------------------------------------------------------------
+# Warm start (v0.2.8)
+# --------------------------------------------------------------------------
+
+def _start_design(m=10, n=4):
+    """A valid start design for the baseline payload: 1 WP + 2 SP factors."""
+    rows = []
+    for b in range(m):
+        wp = -1.0 if b % 2 == 0 else 1.0
+        for r in range(n):
+            rows.append([wp, -1.0 if r % 2 == 0 else 1.0, -1.0 if r < 2 else 1.0])
+    return rows
+
+
+def test_start_design_defaults_to_none():
+    assert validate_payload(_baseline_payload())["start_design"] is None
+
+
+def test_valid_start_design_is_accepted():
+    p = validate_payload(_baseline_payload() | {"start_design": _start_design()})
+    assert len(p["start_design"]) == 40
+    assert p["start_design"][0] == [-1.0, -1.0, -1.0]
+
+
+def test_start_design_wrong_row_count_rejected():
+    with pytest.raises(ValidationError, match="one row per run"):
+        validate_payload(_baseline_payload() | {"start_design": _start_design()[:39]})
+
+
+def test_start_design_wrong_column_count_rejected():
+    sd = [row[:2] for row in _start_design()]
+    with pytest.raises(ValidationError, match="one level per factor"):
+        validate_payload(_baseline_payload() | {"start_design": sd})
+
+
+def test_start_design_level_not_in_level_set_rejected():
+    sd = _start_design()
+    sd[5][2] = 0.0  # factor 3 levels are {-1, 1}
+    with pytest.raises(ValidationError, match="is not a level"):
+        validate_payload(_baseline_payload() | {"start_design": sd})
+
+
+def test_start_design_wp_level_must_be_constant_within_whole_plot():
+    sd = _start_design()
+    sd[1][0] = -sd[1][0]  # change the WP level of one run in whole plot 1
+    with pytest.raises(ValidationError, match="constant within"):
+        validate_payload(_baseline_payload() | {"start_design": sd})

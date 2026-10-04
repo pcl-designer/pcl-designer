@@ -132,6 +132,14 @@ int main(int argc, char **argv) {
     emxArray_real_T *spRaw = load_csv("sp_levels.csv");
     emxArray_real_T *termsRaw = load_csv("modelTerms.csv");
 
+    /* v0.2.8: optional warm-start design. If start_design.csv is present
+     * (N rows; whole-plot factor columns first, then sub-plot factor
+     * columns, in factor levels, rows grouped by whole plot), it replaces
+     * the random starting design of restart 1. Absent = v0.2.7 behavior. */
+    emxArray_real_T *startX = load_csv("start_design.csv");
+    int warm = (startX != NULL);
+    if (!warm) startX = emxCreate_real_T(0, 0);
+
     /* Load Variable 'n' array */
     emxArray_real_T *n_arr = load_csv("n_sizes.csv");
     if (!n_arr) {
@@ -199,6 +207,8 @@ int main(int argc, char **argv) {
     if (pcl_num_starts < 1) pcl_num_starts = 1;
     if (pcl_num_starts > PCL_MAX_STARTS) pcl_num_starts = PCL_MAX_STARTS;
     printf("Restarts: %d\n", pcl_num_starts);
+    if (warm) printf("Warm start: start_design.csv (%d x %d) replaces restart 1\n",
+                     startX->size[0], startX->size[1]);
     printf("Prior coordinates: GAP (alpha_1, log Delta_1, log Delta_2, beta)\n");
 
     time_t start_t, end_t;
@@ -213,7 +223,7 @@ int main(int argc, char **argv) {
         "quadrature", qSz, wpL_data, wpL_size, spL_data, spL_size, mTerms,
         evalMeth, pSz, critMode, cSz, cType,
         s2_data, s2_sz, lam_data, lam_sz, sd,
-        (double)pcl_num_starts,
+        (double)pcl_num_starts, startX,
         optX, &optCrit);
 
     time(&end_t);

@@ -128,6 +128,17 @@ The CE search runs for a few seconds to a few minutes depending on problem size.
 - **The design matrix** as a scrollable table
 - **Download buttons**
 
+### Refine with exact GLMM (optional)
+
+After a PCL search, the result panel offers **Refine with exact GLMM**. It runs one coordinate-exchange restart under the exact GLMM, starting from the PCL design, and keeps every exchange that improves the exact criterion. Because it starts close to a good design, it usually needs only a couple of passes and recovers most of any gap between the PCL design and the exact-GLMM optimum, at a fraction of the cost of a full exact search.
+
+- **Whole-plot variance σ²:** the exact GLMM needs σ² rather than λ. The field is pre-filled from the σ² → λ converter.
+- **Timeout:** the refinement has its own timeout, 3600 s by default.
+- **Cost:** the exact GLMM sums over K^n outcomes per whole plot, so its cost grows exponentially in the whole-plot size. The panel shows K^n for your design and warns when it exceeds 10,000; at that size the PCL design alone may be the practical choice.
+- **Viewing the result:** a summary reports how many runs changed and the refined design's exact-GLMM D-criterion. Switch between **Refined design** and **PCL design** to view or download either.
+
+Refinement needs a main-effect term for every factor, so the factor levels of each run can be read from the design; otherwise the button is disabled.
+
 ### Run Sheet vs Model Matrix
 
 The result section gives you two views of the design and two corresponding CSV downloads. Both are derived from the same underlying optimization — pick whichever fits the next thing you're going to do.

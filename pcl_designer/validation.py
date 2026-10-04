@@ -103,6 +103,54 @@ def model_term_labels(
     return labels
 
 
+def _validate_start_design(
+    raw: Any,
+    n_sizes: list[int],
+    wp_levels: list[list[float]],
+    sp_levels: list[list[float]],
+) -> list[list[float]] | None:
+    """
+    Optional warm-start design (v0.2.8). One row per run (rows grouped by
+    whole plot), one column per factor in factor order (whole-plot factors
+    first, then sub-plot factors), in factor levels. It replaces the random
+    starting design of restart 1 of the coordinate-exchange search.
+    """
+    if raw is None:
+        return None
+    n_runs = sum(n_sizes)
+    w, s = len(wp_levels), len(sp_levels)
+    if not isinstance(raw, list) or len(raw) != n_runs:
+        raise ValidationError(
+            f"start_design must have one row per run ({n_runs} rows; got "
+            f"{len(raw) if isinstance(raw, list) else 'N/A'})."
+        )
+    rows: list[list[float]] = []
+    for r, row in enumerate(raw):
+        if not isinstance(row, list) or len(row) != w + s:
+            raise ValidationError(
+                f"start_design[{r}] must list one level per factor ({w + s} values)."
+            )
+        vals = [_as_float(v, f"start_design[{r}][{c}]") for c, v in enumerate(row)]
+        for c, v in enumerate(vals):
+            levels = wp_levels[c] if c < w else sp_levels[c - w]
+            if not any(abs(v - lv) < 1e-9 for lv in levels):
+                raise ValidationError(
+                    f"start_design[{r}][{c}] = {v:g} is not a level of factor "
+                    f"{factor_label(c + 1, w, s)}."
+                )
+        rows.append(vals)
+    start = 0
+    for b, nb in enumerate(n_sizes):
+        for r in range(start, start + nb):
+            if any(abs(rows[r][c] - rows[start][c]) > 1e-9 for c in range(w)):
+                raise ValidationError(
+                    f"start_design: whole-plot factor levels must be constant within "
+                    f"whole plot {b + 1} (rows {start + 1}-{start + nb})."
+                )
+        start += nb
+    return rows
+
+
 # --------------------------------------------------------------------------
 # Public entry point
 # --------------------------------------------------------------------------
@@ -114,7 +162,8 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     Required keys: m, n, K, wp_levels, sp_levels, model_terms.
     Optional keys with defaults: sigma2_fixed, lambda_fixed, seed,
                                   copula_type, eval_method, crit_mode,
-                                  prior_mean, prior_cov, timeout_sec, num_starts.
+                                  prior_mean, prior_cov, timeout_sec, num_starts,
+                                  start_design.
     """
     if not isinstance(payload, dict):
         raise ValidationError("Request body must be a JSON object.")
@@ -241,6 +290,10 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     if num_starts > 1024:
         raise ValidationError("num_starts must be at most 1024.")
 
+    start_design = _validate_start_design(
+        payload.get("start_design"), n_sizes, wp_levels, sp_levels
+    )
+
     term_labels = model_term_labels(model_terms, len(wp_levels), len(sp_levels))
 
     # Indices (0-based, into the binary's output columns) of terms that
@@ -271,6 +324,7 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
         "prior_cov": prior_cov,
         "timeout_sec": timeout_sec,
         "num_starts": num_starts,
+        "start_design": start_design,
         "num_factors": num_factors,
         "num_wp_factors": len(wp_levels),
         "num_sp_factors": len(sp_levels),

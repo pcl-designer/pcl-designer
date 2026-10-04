@@ -5,6 +5,12 @@ const SP = "sp";
 let factorCount = { wp: 0, sp: 0 };
 let lastResult = null;
 let lastEcho = null;
+// v0.2.8 exact-GLMM refinement state. lastPayload is the request that
+// produced the current PCL result; the refine request reuses it so later
+// edits to the form cannot desynchronize the two runs.
+let lastPayload = null;
+let pclResult = null, pclEcho = null;
+let refinedResult = null, refinedEcho = null;
 
 // --------------------------- Init ---------------------------------------
 
@@ -42,6 +48,9 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("download-model-matrix").addEventListener("click", downloadModelMatrix);
   document.getElementById("download-json").addEventListener("click", downloadJSON);
   document.getElementById("show-interactions").addEventListener("change", rerenderDesignTable);
+  document.getElementById("refine-btn").addEventListener("click", onRefine);
+  document.querySelectorAll('input[name="design-view"]').forEach((el) =>
+    el.addEventListener("change", onDesignViewChange));
   document.getElementById("rerun-new-seed").addEventListener("click", () => {
     document.getElementById("seed").value = "";
     onSubmit(new Event("submit"));
@@ -383,7 +392,13 @@ async function onSubmit(ev) {
     } else {
       lastResult = data.result;
       lastEcho = data.echo;
+      lastPayload = payload;
+      pclResult = data.result;
+      pclEcho = data.echo;
+      refinedResult = null;
+      refinedEcho = null;
       renderResults(data.result, data.echo, wallSec);
+      setupRefinePanel();
     }
   } catch (e) {
     showError(`Network or parse error: ${e.message}`);
@@ -443,6 +458,23 @@ function collectPayload() {
 // --------------------------- Render -------------------------------------
 
 function renderResults(result, echo, wallSec) {
+  renderMetrics(result, echo);
+
+  // Reset interactions toggle to default (main effects only) on each new run.
+  document.getElementById("show-interactions").checked = false;
+  // Hide the toggle entirely if there's nothing to toggle (no interactions in model).
+  const meIdx = (echo && echo.main_effect_term_indices) || [];
+  const hasInteractions = result.n_cols > meIdx.length;
+  document.getElementById("view-toggle-wrap").style.display =
+    hasInteractions ? "" : "none";
+
+  rerenderDesignTable();
+
+  document.getElementById("results").hidden = false;
+  document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderMetrics(result, echo) {
   const dCrit = result.d_criterion;
   document.getElementById("d-criterion").textContent =
     dCrit === null ? "—" : dCrit.toFixed(6);
@@ -459,19 +491,136 @@ function renderResults(result, echo, wallSec) {
   document.getElementById("dimensions").textContent = `${result.n_rows} × ${result.n_cols}`;
   document.getElementById("seed-used").textContent = echo.seed;
   document.getElementById("raw-stdout").textContent = result.raw_stdout || "(no stdout)";
+}
 
-  // Reset interactions toggle to default (main effects only) on each new run.
-  document.getElementById("show-interactions").checked = false;
-  // Hide the toggle entirely if there's nothing to toggle (no interactions in model).
-  const meIdx = (echo && echo.main_effect_term_indices) || [];
-  const hasInteractions = result.n_cols > meIdx.length;
-  document.getElementById("view-toggle-wrap").style.display =
-    hasInteractions ? "" : "none";
+// --------------------------- Exact-GLMM refinement (v0.2.8) -------------
 
+function factorColumnIndices(payload) {
+  // For each factor (in order: whole-plot factors, then sub-plot factors),
+  // the output column of its main-effect term. Returns null if some factor
+  // has no main-effect term, in which case its levels cannot be read back
+  // from the model matrix and the refinement is unavailable.
+  const nFactors = payload.wp_levels.length + payload.sp_levels.length;
+  const cols = [];
+  for (let f = 1; f <= nFactors; f++) {
+    const idx = payload.model_terms.findIndex((t) => t.length === 1 && t[0] === f);
+    if (idx < 0) return null;
+    cols.push(idx);
+  }
+  return cols;
+}
+
+function setupRefinePanel() {
+  const panel = document.getElementById("refine-panel");
+  document.getElementById("refine-result").hidden = true;
+  document.getElementById("refine-status").textContent = "";
+  if (!pclEcho || pclEcho.eval_method !== "copula_pcl" || !lastPayload) {
+    panel.hidden = true;
+    return;
+  }
+  const btn = document.getElementById("refine-btn");
+  const costEl = document.getElementById("refine-cost");
+  const cols = factorColumnIndices(lastPayload);
+  if (!cols) {
+    btn.disabled = true;
+    costEl.textContent = "Refinement needs a main-effect term for every factor, " +
+      "so that the factor levels of each run can be read from the design.";
+    costEl.classList.add("refine-warn");
+    panel.hidden = false;
+    return;
+  }
+  btn.disabled = false;
+  const convS2 = parseFloat(document.getElementById("conv-sigma2").value);
+  if (!Number.isNaN(convS2)) document.getElementById("refine-sigma2").value = convS2;
+
+  // The exact GLMM sums over K^n outcomes per whole plot, so its cost grows
+  // exponentially in the whole-plot size. Flag configurations where even a
+  // single exact restart is likely to be slow.
+  const nMax = Math.max(...pclEcho.n_sizes);
+  const outcomes = Math.pow(pclEcho.K, nMax);
+  const big = outcomes > 10000;
+  costEl.textContent =
+    `The exact GLMM sums over K^n = ${pclEcho.K}^${nMax} = ` +
+    `${outcomes.toLocaleString()} outcomes per whole plot. ` +
+    (big
+      ? "At this size even one exact restart may take hours or not finish " +
+        "within the timeout; the PCL design alone may be the practical choice."
+      : "At this size a refinement typically takes minutes.");
+  costEl.classList.toggle("refine-warn", big);
+  panel.hidden = false;
+}
+
+async function onRefine() {
+  if (!pclResult || !lastPayload) return;
+  hideError();
+  const cols = factorColumnIndices(lastPayload);
+  if (!cols) return;
+  const startDesign = pclResult.design_matrix.map((row) => cols.map((c) => row[c]));
+  const sigma2 = parseFloat(document.getElementById("refine-sigma2").value);
+  const timeoutSec = parseFloat(document.getElementById("refine-timeout").value) || 3600;
+  if (Number.isNaN(sigma2) || sigma2 <= 0) {
+    showError("Enter a positive whole-plot variance for the exact GLMM.");
+    return;
+  }
+  const payload = {
+    ...lastPayload,
+    eval_method: "glmm_exact",
+    sigma2_fixed: sigma2,
+    num_starts: 1,
+    seed: pclEcho.seed,
+    timeout_sec: timeoutSec,
+    start_design: startDesign,
+  };
+
+  const btn = document.getElementById("refine-btn");
+  const statusEl = document.getElementById("refine-status");
+  btn.disabled = true;
+  statusEl.textContent = "Running exact-GLMM refinement…";
+  try {
+    const resp = await fetch("/api/optimize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!data.ok) {
+      showError(data.error || `Server returned HTTP ${resp.status}`);
+      return;
+    }
+    refinedResult = data.result;
+    refinedEcho = data.echo;
+    const refinedLevels = refinedResult.design_matrix.map((row) => cols.map((c) => row[c]));
+    const changed = refinedLevels.filter((row, i) =>
+      row.some((v, j) => Math.abs(v - startDesign[i][j]) > 1e-9)).length;
+    const crit = refinedResult.d_criterion;
+    document.getElementById("refine-summary").textContent =
+      `Refinement changed ${changed} of ${startDesign.length} runs in ` +
+      `${refinedResult.elapsed_sec.toFixed(1)} s (σ² = ${sigma2}). ` +
+      `Exact-GLMM D-criterion of the refined design: ` +
+      `${crit === null ? "—" : crit.toFixed(6)}.`;
+    document.getElementById("refine-result").hidden = false;
+    document.querySelector('input[name="design-view"][value="refined"]').checked = true;
+    onDesignViewChange();
+    statusEl.textContent = "";
+  } catch (e) {
+    showError(`Network or parse error: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    if (statusEl.textContent.startsWith("Running")) statusEl.textContent = "";
+  }
+}
+
+function onDesignViewChange() {
+  const view = document.querySelector('input[name="design-view"]:checked').value;
+  if (view === "refined" && refinedResult) {
+    lastResult = refinedResult;
+    lastEcho = refinedEcho;
+  } else {
+    lastResult = pclResult;
+    lastEcho = pclEcho;
+  }
+  renderMetrics(lastResult, lastEcho);
   rerenderDesignTable();
-
-  document.getElementById("results").hidden = false;
-  document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function rerenderDesignTable() {

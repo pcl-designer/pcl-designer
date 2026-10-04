@@ -142,3 +142,20 @@ def test_pad_rows_zero_pad():
 def test_pad_rows_none_pad():
     out = _pad_rows([[1.0], [2.0, 3.0]], fill=None)
     assert out == [[1.0, None], [2.0, 3.0]]
+
+
+def test_start_design_csv_written_only_when_given(tmp_path: Path):
+    params = validate_payload(_baseline_payload())
+    write_inputs(params, tmp_path)
+    assert not (tmp_path / "start_design.csv").exists()
+
+    rows = []
+    for b in range(10):
+        for r in range(4):
+            rows.append([1.0 if b % 2 else -1.0, -1.0 if r % 2 == 0 else 1.0, 1.0])
+    params = validate_payload(_baseline_payload() | {"start_design": rows})
+    out = tmp_path / "warm"
+    write_inputs(params, out)
+    with (out / "start_design.csv").open() as f:
+        written = [[float(v) for v in r] for r in csv.reader(f)]
+    assert written == rows

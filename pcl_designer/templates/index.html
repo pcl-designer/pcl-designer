@@ -222,6 +222,39 @@
       <button type="button" id="rerun-new-seed" class="ghost">Re-run with new seed</button>
     </div>
 
+    <div id="refine-panel" class="refine" hidden>
+      <h3>Refine with the exact GLMM</h3>
+      <p class="hint">
+        Runs one exact-GLMM coordinate-exchange restart that starts from this
+        PCL design and keeps every exchange that improves the exact criterion.
+        This usually recovers most of any gap between the PCL design and the
+        exact-GLMM optimum at a fraction of the cost of a full exact search.
+      </p>
+      <p class="hint" id="refine-cost"></p>
+      <div class="refine-inputs">
+        <label>
+          Whole-plot variance &sigma;&sup2; for the exact GLMM
+          <input type="number" id="refine-sigma2" min="0" step="any" value="2.5">
+          <small>Pre-filled from the &sigma;&sup2; &rarr; &lambda; converter.</small>
+        </label>
+        <label>
+          Timeout (seconds)
+          <input type="number" id="refine-timeout" min="10" step="10" value="3600">
+        </label>
+      </div>
+      <button type="button" id="refine-btn">Refine with exact GLMM</button>
+      <span id="refine-status"></span>
+    </div>
+
+    <div id="refine-result" class="refine" hidden>
+      <p id="refine-summary"></p>
+      <p class="design-switch">
+        Showing:
+        <label><input type="radio" name="design-view" value="refined" checked> Refined design (exact GLMM)</label>
+        <label><input type="radio" name="design-view" value="pcl"> PCL design</label>
+      </p>
+    </div>
+
     <h3>Design matrix</h3>
     <p class="hint">
       Default view is the <strong>Run Sheet</strong>: one column per factor,
