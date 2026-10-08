@@ -4,7 +4,7 @@
  * File: eml_mtimes_helper.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
 #ifndef EML_MTIMES_HELPER_H
@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-void binary_expand_op_6(emxArray_real_T *in1);
+void binary_expand_op_7(emxArray_real_T *in1);
 
 #ifdef __cplusplus
 }

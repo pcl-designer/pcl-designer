@@ -158,6 +158,14 @@
             <span>CE restarts (num_starts)</span>
             <input type="number" id="num-starts" name="num_starts" min="1" max="1024" step="1" value="15">
           </label>
+          <label>
+            <span>Prior integration</span>
+            <select id="quadrature" name="quadrature">
+              <option value="axial" selected>axial, 2p nodes (fast)</option>
+              <option value="gjs">Gotwalt-Jones-Steinberg (wide priors)</option>
+            </select>
+            <small id="quad-note">Axial: 2p nodes. G-J-S: 1 + 2(p+1)(p+2) nodes, roughly 10-20&times; the run time; use it when the prior is wide.</small>
+          </label>
         </div>
         <div class="grid">
           <label>

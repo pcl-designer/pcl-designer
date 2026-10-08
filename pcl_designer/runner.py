@@ -137,6 +137,11 @@ def write_inputs(params: dict[str, Any], work_dir: Path) -> None:
         f.write(f"evalMethod={params['eval_method']}\n")
         f.write(f"crit_mode={params['crit_mode']}\n")
         f.write(f"num_starts={params['num_starts']}\n")
+        # v0.2.9: prior integration rule (binary default is axial)
+        f.write(f"quadrature={params.get('quadrature', 'axial')}\n")
+        if params.get("quadrature", "axial") == "gjs":
+            f.write(f"gjs_radii={params.get('gjs_radii', 2)}\n")
+            f.write(f"gjs_rotations={params.get('gjs_rotations', 1)}\n")
 
 
 # --------------------------------------------------------------------------

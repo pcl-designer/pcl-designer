@@ -1,14 +1,14 @@
 /*
  * Prerelease License - for engineering feedback and testing purposes
  * only. Not for sale.
- * File: sum.h
+ * File: qrsolve.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
-#ifndef SUM_H
-#define SUM_H
+#ifndef QRSOLVE_H
+#define QRSOLVE_H
 
 /* Include Files */
 #include "DesignWizardVn_App_GapPrimary_types.h"
@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-double sum(const emxArray_real_T *x);
+int rankFromQR(const emxArray_real_T *A);
 
 #ifdef __cplusplus
 }
@@ -29,7 +29,7 @@ double sum(const emxArray_real_T *x);
 
 #endif
 /*
- * File trailer for sum.h
+ * File trailer for qrsolve.h
  *
  * [EOF]
  */

@@ -4,7 +4,7 @@
  * File: DesignWizardVn_App_GapPrimary_emxutil.c
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
 /* Include Files */
@@ -15,6 +15,48 @@
 #include <string.h>
 
 /* Function Definitions */
+/*
+ * Arguments    : emxArray_boolean_T *emxArray
+ *                int oldNumel
+ * Return Type  : void
+ */
+void emxEnsureCapacity_boolean_T(emxArray_boolean_T *emxArray, int oldNumel)
+{
+  int i;
+  int newNumel;
+  void *newData;
+  if (oldNumel < 0) {
+    oldNumel = 0;
+  }
+  newNumel = 1;
+  for (i = 0; i < emxArray->numDimensions; i++) {
+    newNumel *= emxArray->size[i];
+  }
+  if (newNumel > emxArray->allocatedSize) {
+    i = emxArray->allocatedSize;
+    if (i < 16) {
+      i = 16;
+    }
+    while (i < newNumel) {
+      if (i > 1073741823) {
+        i = MAX_int32_T;
+      } else {
+        i *= 2;
+      }
+    }
+    newData = malloc((unsigned int)i * sizeof(bool));
+    if (emxArray->data != NULL) {
+      memcpy(newData, emxArray->data, sizeof(bool) * (unsigned int)oldNumel);
+      if (emxArray->canFreeData) {
+        free(emxArray->data);
+      }
+    }
+    emxArray->data = (bool *)newData;
+    emxArray->allocatedSize = i;
+    emxArray->canFreeData = true;
+  }
+}
+
 /*
  * Arguments    : emxArray_int32_T *emxArray
  *                int oldNumel
@@ -195,6 +237,22 @@ void emxFreeStruct_cell_wrap_0(cell_wrap_0 *pStruct)
 }
 
 /*
+ * Arguments    : emxArray_boolean_T **pEmxArray
+ * Return Type  : void
+ */
+void emxFree_boolean_T(emxArray_boolean_T **pEmxArray)
+{
+  if (*pEmxArray != (emxArray_boolean_T *)NULL) {
+    if (((*pEmxArray)->data != (bool *)NULL) && (*pEmxArray)->canFreeData) {
+      free((*pEmxArray)->data);
+    }
+    free((*pEmxArray)->size);
+    free(*pEmxArray);
+    *pEmxArray = (emxArray_boolean_T *)NULL;
+  }
+}
+
+/*
  * Arguments    : emxArray_cell_wrap_0 **pEmxArray
  * Return Type  : void
  */
@@ -305,6 +363,23 @@ void emxFree_uint32_T(emxArray_uint32_T **pEmxArray)
 }
 
 /*
+ * Arguments    : emxArray_boolean_T **pEmxArray
+ * Return Type  : void
+ */
+void emxInit_boolean_T(emxArray_boolean_T **pEmxArray)
+{
+  emxArray_boolean_T *emxArray;
+  *pEmxArray = (emxArray_boolean_T *)malloc(sizeof(emxArray_boolean_T));
+  emxArray = *pEmxArray;
+  emxArray->data = (bool *)NULL;
+  emxArray->numDimensions = 1;
+  emxArray->size = (int *)malloc(sizeof(int));
+  emxArray->allocatedSize = 0;
+  emxArray->canFreeData = true;
+  emxArray->size[0] = 0;
+}
+
+/*
  * Arguments    : emxArray_cell_wrap_0 **pEmxArray
  *                int numDimensions
  * Return Type  : void
@@ -412,6 +487,33 @@ void emxInit_uint32_T(emxArray_uint32_T **pEmxArray, int numDimensions)
   emxArray->canFreeData = true;
   for (i = 0; i < numDimensions; i++) {
     emxArray->size[i] = 0;
+  }
+}
+
+/*
+ * Arguments    : emxArray_real_T *emxArray
+ * Return Type  : void
+ */
+void emxReserve_real_T(emxArray_real_T *emxArray)
+{
+  int i;
+  void *newData;
+  if (emxArray->allocatedSize < 81) {
+    int numel;
+    numel = 1;
+    for (i = 0; i < emxArray->numDimensions; i++) {
+      numel *= emxArray->size[i];
+    }
+    newData = malloc(81U * sizeof(double));
+    if (emxArray->data != NULL) {
+      memcpy(newData, emxArray->data, sizeof(double) * (unsigned int)numel);
+      if (emxArray->canFreeData) {
+        free(emxArray->data);
+      }
+    }
+    emxArray->data = (double *)newData;
+    emxArray->allocatedSize = 81;
+    emxArray->canFreeData = true;
   }
 }
 

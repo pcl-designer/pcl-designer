@@ -4,7 +4,7 @@
  * File: DesignWizardVn_App_GapPrimary_types.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
 #ifndef DESIGNWIZARDVN_APP_GAPPRIMARY_TYPES_H
@@ -55,21 +55,6 @@ typedef struct {
 } emxArray_cell_wrap_0;
 #endif /* typedef_emxArray_cell_wrap_0 */
 
-#ifndef struct_emxArray_uint32_T
-#define struct_emxArray_uint32_T
-struct emxArray_uint32_T {
-  unsigned int *data;
-  int *size;
-  int allocatedSize;
-  int numDimensions;
-  bool canFreeData;
-};
-#endif /* struct_emxArray_uint32_T */
-#ifndef typedef_emxArray_uint32_T
-#define typedef_emxArray_uint32_T
-typedef struct emxArray_uint32_T emxArray_uint32_T;
-#endif /* typedef_emxArray_uint32_T */
-
 #ifndef struct_emxArray_int32_T
 #define struct_emxArray_int32_T
 struct emxArray_int32_T {
@@ -99,6 +84,36 @@ struct emxArray_int8_T {
 #define typedef_emxArray_int8_T
 typedef struct emxArray_int8_T emxArray_int8_T;
 #endif /* typedef_emxArray_int8_T */
+
+#ifndef struct_emxArray_boolean_T
+#define struct_emxArray_boolean_T
+struct emxArray_boolean_T {
+  bool *data;
+  int *size;
+  int allocatedSize;
+  int numDimensions;
+  bool canFreeData;
+};
+#endif /* struct_emxArray_boolean_T */
+#ifndef typedef_emxArray_boolean_T
+#define typedef_emxArray_boolean_T
+typedef struct emxArray_boolean_T emxArray_boolean_T;
+#endif /* typedef_emxArray_boolean_T */
+
+#ifndef struct_emxArray_uint32_T
+#define struct_emxArray_uint32_T
+struct emxArray_uint32_T {
+  unsigned int *data;
+  int *size;
+  int allocatedSize;
+  int numDimensions;
+  bool canFreeData;
+};
+#endif /* struct_emxArray_uint32_T */
+#ifndef typedef_emxArray_uint32_T
+#define typedef_emxArray_uint32_T
+typedef struct emxArray_uint32_T emxArray_uint32_T;
+#endif /* typedef_emxArray_uint32_T */
 
 #endif
 /*

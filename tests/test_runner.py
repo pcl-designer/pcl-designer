@@ -159,3 +159,13 @@ def test_start_design_csv_written_only_when_given(tmp_path: Path):
     with (out / "start_design.csv").open() as f:
         written = [[float(v) for v in r] for r in csv.reader(f)]
     assert written == rows
+
+
+def test_config_txt_writes_quadrature(tmp_path: Path):
+    payload = _baseline_payload()
+    payload["quadrature"] = "gjs"
+    params = validate_payload(payload)
+    write_inputs(params, tmp_path)
+    text = (tmp_path / "config.txt").read_text()
+    assert "quadrature=gjs" in text
+    assert "gjs_radii=2" in text and "gjs_rotations=1" in text

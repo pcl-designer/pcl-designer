@@ -1,14 +1,14 @@
 /*
  * Prerelease License - for engineering feedback and testing purposes
  * only. Not for sale.
- * File: chol.h
+ * File: xzlarf.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
-#ifndef CHOL_H
-#define CHOL_H
+#ifndef XZLARF_H
+#define XZLARF_H
 
 /* Include Files */
 #include "DesignWizardVn_App_GapPrimary_types.h"
@@ -21,7 +21,11 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-void chol(emxArray_real_T *A);
+void b_xzlarf(int m, int n, int iv0, double tau, emxArray_real_T *C, int ic0,
+              int ldc, emxArray_real_T *work);
+
+void xzlarf(int m, int n, int iv0, double tau, double C_data[], int ic0,
+            int ldc, double work_data[]);
 
 #ifdef __cplusplus
 }
@@ -29,7 +33,7 @@ void chol(emxArray_real_T *A);
 
 #endif
 /*
- * File trailer for chol.h
+ * File trailer for xzlarf.h
  *
  * [EOF]
  */

@@ -1,16 +1,17 @@
 /*
  * Prerelease License - for engineering feedback and testing purposes
  * only. Not for sale.
- * File: rng.h
+ * File: svd.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
-#ifndef RNG_H
-#define RNG_H
+#ifndef SVD_H
+#define SVD_H
 
 /* Include Files */
+#include "DesignWizardVn_App_GapPrimary_types.h"
 #include "rtwtypes.h"
 #include <stddef.h>
 #include <stdlib.h>
@@ -20,7 +21,8 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-void rng(double varargin_1);
+void svd(const emxArray_real_T *A, emxArray_real_T *U, emxArray_real_T *S,
+         emxArray_real_T *V);
 
 #ifdef __cplusplus
 }
@@ -28,7 +30,7 @@ void rng(double varargin_1);
 
 #endif
 /*
- * File trailer for rng.h
+ * File trailer for svd.h
  *
  * [EOF]
  */

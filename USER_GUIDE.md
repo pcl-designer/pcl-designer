@@ -117,6 +117,8 @@ Surrogate evaluator, criterion mode, restart count, timeout, and the prior. (The
 
 The **prior** fields let you replace the default prior over the model parameters. Enter a prior-mean vector and a prior-covariance (a single scalar *s* for *s*&middot;I_p, *p* variances for a diagonal, or *p* rows of *p* values for a full matrix), both in the gap coordinates (alpha_1, logDelta_1, ..., beta_1, ...); the panel shows the required dimension *p* = (K-1) + #terms. Leave them blank to use the defaults (mu = 0, Sigma = 0.25 I_p).
 
+**Prior integration** (v0.2.9) sets how the criterion averages over the prior. *Axial* (the default, and the only rule before v0.2.9) uses 2p nodes, each moving one parameter sqrt(p) prior standard deviations from the prior mean. It is fast and works well when the prior is narrow, as in the default prior. *Gotwalt-Jones-Steinberg* (Gotwalt, Jones and Steinberg 2009, *Technometrics* 51:88-95) uses a center point and two radii, each a randomly rotated simplex, 1 + 2(p+1)(p+2) nodes in all, so a search takes roughly 10-20 times longer. Its nodes move all parameters at once, as prior draws do. Use it when the prior on the regression coefficients is wide: in the accompanying paper's check at the main-effects-plus-two-factor-interactions model, doubling the coefficient prior's standard deviation left the axial-rule PCL design 12.7% short of the exact-GLMM design (median relative efficiency), while with G-J-S for both searches the PCL search returned the exact-GLMM design itself. Other cases are still being checked.
+
 ### Click "Generate optimal design"
 
 The CE search runs for a few seconds to a few minutes depending on problem size. When it finishes, the page shows:

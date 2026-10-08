@@ -4,7 +4,7 @@
  * File: xnrm2.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
 #ifndef XNRM2_H
@@ -21,6 +21,8 @@ extern "C" {
 #endif
 
 /* Function Declarations */
+double b_xnrm2(int n, const double x[3]);
+
 double xnrm2(int n, const emxArray_real_T *x, int ix0);
 
 #ifdef __cplusplus

@@ -345,3 +345,36 @@ def test_start_design_wp_level_must_be_constant_within_whole_plot():
     sd[1][0] = -sd[1][0]  # change the WP level of one run in whole plot 1
     with pytest.raises(ValidationError, match="constant within"):
         validate_payload(_baseline_payload() | {"start_design": sd})
+
+
+# --- v0.2.9: prior integration rule -------------------------------------
+
+def test_quadrature_defaults_to_axial():
+    p = validate_payload(_baseline_payload())
+    assert p["quadrature"] == "axial"
+    assert p["quad_nodes"] == 2 * p["p_dim"]
+
+
+def test_gjs_quadrature_node_count():
+    payload = _baseline_payload()
+    payload["quadrature"] = "GJS"
+    p = validate_payload(payload)
+    assert p["quadrature"] == "gjs"
+    assert p["gjs_radii"] == 2 and p["gjs_rotations"] == 1
+    # p = 9: 1 + 2 * (p+1)(p+2) = 221
+    assert p["quad_nodes"] == 221
+
+
+def test_unknown_quadrature_rejected():
+    payload = _baseline_payload()
+    payload["quadrature"] = "sparse"
+    with pytest.raises(ValidationError):
+        validate_payload(payload)
+
+
+def test_gjs_radii_bounds():
+    payload = _baseline_payload()
+    payload["quadrature"] = "gjs"
+    payload["gjs_radii"] = 10
+    with pytest.raises(ValidationError):
+        validate_payload(payload)

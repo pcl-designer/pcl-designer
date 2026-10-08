@@ -163,6 +163,7 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     Optional keys with defaults: sigma2_fixed, lambda_fixed, seed,
                                   copula_type, eval_method, crit_mode,
                                   prior_mean, prior_cov, timeout_sec, num_starts,
+                                  quadrature, gjs_radii, gjs_rotations,
                                   start_design.
     """
     if not isinstance(payload, dict):
@@ -290,6 +291,24 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     if num_starts > 1024:
         raise ValidationError("num_starts must be at most 1024.")
 
+    # v0.2.9: prior integration rule. "axial" (2p nodes, the default and the
+    # only rule before v0.2.9) or "gjs" (Gotwalt, Jones and Steinberg 2009:
+    # center point plus gjs_radii radii, each a randomly rotated extended
+    # simplex, gjs_rotations rotations per radius).
+    quadrature = str(payload.get("quadrature", "axial")).strip().lower()
+    if quadrature not in ("axial", "gjs"):
+        raise ValidationError("quadrature must be 'axial' or 'gjs'.")
+    gjs_radii = _as_int(payload.get("gjs_radii", 2), "gjs_radii", minimum=1)
+    if gjs_radii > 9:
+        raise ValidationError("gjs_radii must be at most 9.")
+    gjs_rotations = _as_int(payload.get("gjs_rotations", 1), "gjs_rotations", minimum=1)
+    if gjs_rotations > 99:
+        raise ValidationError("gjs_rotations must be at most 99.")
+    if quadrature == "gjs":
+        quad_nodes = 1 + gjs_radii * gjs_rotations * (p_dim + 1) * (p_dim + 2)
+    else:
+        quad_nodes = 2 * p_dim
+
     start_design = _validate_start_design(
         payload.get("start_design"), n_sizes, wp_levels, sp_levels
     )
@@ -324,6 +343,10 @@ def validate_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
         "prior_cov": prior_cov,
         "timeout_sec": timeout_sec,
         "num_starts": num_starts,
+        "quadrature": quadrature,
+        "gjs_radii": gjs_radii,
+        "gjs_rotations": gjs_rotations,
+        "quad_nodes": quad_nodes,
         "start_design": start_design,
         "num_factors": num_factors,
         "num_wp_factors": len(wp_levels),

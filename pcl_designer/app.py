@@ -52,6 +52,8 @@ def create_app() -> Flask:
                 "copula_family": params["copula_family"],
                 "seed": params["seed"],
                 "num_starts": params["num_starts"],
+                "quadrature": params["quadrature"],
+                "quad_nodes": params["quad_nodes"],
                 "warm_start": params["start_design"] is not None,
             },
         })

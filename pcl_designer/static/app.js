@@ -445,6 +445,7 @@ function collectPayload() {
       model_terms: modelTerms,
       timeout_sec: timeoutSec,
       num_starts: parseInt(document.getElementById("num-starts").value, 10) || 15,
+      quadrature: (document.getElementById("quadrature") || {}).value || "axial",
       ...prior,
     };
     if (seed !== undefined && !Number.isNaN(seed)) payload.seed = seed;

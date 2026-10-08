@@ -15,6 +15,12 @@
  * value and passes it to the entry. */
 #define PCL_MAX_STARTS 1024
 int pcl_num_starts = 15;
+/* v0.2.9: prior integration rule (config keys quadrature, gjs_radii, gjs_rotations).
+ * Default axial reproduces v0.2.8 exactly. */
+char pcl_quadrature[32] = "axial";
+int pcl_gjs_radii = 2;
+int pcl_gjs_rotations = 1;
+int pcl_write_restarts = 0;   /* v0.2.9: 1 = write restart_design_NN.csv + restart_diagnostics.csv */
 
 /*
  * v4 main wrapper for DesignWizardVn_App_GapPrimary.
@@ -66,6 +72,10 @@ void parse_config(double *m, double *K, double *sd,
             else if (strcmp(key, "evalMethod") == 0) strcpy(evalMeth, val);
             else if (strcmp(key, "crit_mode") == 0) strcpy(critMode, val);
             else if (strcmp(key, "num_starts") == 0) pcl_num_starts = (int)atof(val);
+            else if (strcmp(key, "quadrature") == 0) { strncpy(pcl_quadrature, val, 31); pcl_quadrature[31] = 0; }
+            else if (strcmp(key, "gjs_radii") == 0) pcl_gjs_radii = (int)atof(val);
+            else if (strcmp(key, "gjs_rotations") == 0) pcl_gjs_rotations = (int)atof(val);
+            else if (strcmp(key, "write_restarts") == 0) pcl_write_restarts = (int)atof(val);
         }
     }
     fclose(f);
@@ -113,7 +123,22 @@ void export_to_csv(const char* filename, emxArray_real_T *optimalX) {
     fclose(f);
 }
 
+/* v0.2.9: write slice k of a 3D emxArray (rows x cols x slabs) as CSV. */
+void export_slice_to_csv(const char* filename, emxArray_real_T *X3d, int k) {
+    int rows = X3d->size[0], cols = X3d->size[1];
+    FILE *f = fopen(filename, "w");
+    if (!f) return;
+    int base = k * rows * cols;
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++)
+            fprintf(f, "%.8f%s", X3d->data[base + i + j * rows], (j == cols-1) ? "" : ",");
+        fprintf(f, "\n");
+    }
+    fclose(f);
+}
+
 int main(int argc, char **argv) {
+    setvbuf(stdout, NULL, _IOLBF, 0);   /* v0.2.9: line-buffered log, so progress shows while running */
     DesignWizardVn_App_GapPrimary_initialize();
 
     /* 1. Defaults & Parsing */
@@ -210,6 +235,26 @@ int main(int argc, char **argv) {
     if (warm) printf("Warm start: start_design.csv (%d x %d) replaces restart 1\n",
                      startX->size[0], startX->size[1]);
     printf("Prior coordinates: GAP (alpha_1, log Delta_1, log Delta_2, beta)\n");
+    /* v0.2.9: prior integration rule -> numPoints code passed to the entry */
+    double quadCode = 1000.0;
+    {
+        for (char *c = pcl_quadrature; *c; ++c) *c = (char)tolower((unsigned char)*c);
+        int pdim = (int)K - 1 + q;
+        if (strcmp(pcl_quadrature, "gjs") == 0) {
+            if (pcl_gjs_radii < 1) pcl_gjs_radii = 1;
+            if (pcl_gjs_radii > 9) pcl_gjs_radii = 9;
+            if (pcl_gjs_rotations < 1) pcl_gjs_rotations = 1;
+            if (pcl_gjs_rotations > 99) pcl_gjs_rotations = 99;
+            quadCode = 100.0 * pcl_gjs_radii + pcl_gjs_rotations;
+            long nodes = 1L + (long)pcl_gjs_radii * pcl_gjs_rotations * (long)(pdim + 1) * (pdim + 2);
+            printf("Prior integration: Gotwalt-Jones-Steinberg, %d radii x %d rotation(s), %ld nodes (p = %d)\n",
+                   pcl_gjs_radii, pcl_gjs_rotations, nodes, pdim);
+        } else {
+            if (strcmp(pcl_quadrature, "axial") != 0)
+                printf("Warning: unknown quadrature '%s'; using axial\n", pcl_quadrature);
+            printf("Prior integration: axial, %d nodes (p = %d)\n", 2 * pdim, pdim);
+        }
+    }
 
     time_t start_t, end_t;
     time(&start_t);
@@ -217,20 +262,38 @@ int main(int argc, char **argv) {
     emxArray_real_T *optX;
     double optCrit;
     emxInitArray_real_T(&optX, 2);
+    emxArray_real_T *allDesigns;
+    emxInitArray_real_T(&allDesigns, 3);
+    static double allCrits_data[PCL_MAX_STARTS];
+    int allCrits_size[1] = {0};
 
     /* 6. Run Search (num_starts passed as the final input argument) */
-    DesignWizardVn_App_GapPrimary(m, n_arr, K, pMean, pCov, 1000.0,
+    DesignWizardVn_App_GapPrimary(m, n_arr, K, pMean, pCov, quadCode,
         "quadrature", qSz, wpL_data, wpL_size, spL_data, spL_size, mTerms,
         evalMeth, pSz, critMode, cSz, cType,
         s2_data, s2_sz, lam_data, lam_sz, sd,
         (double)pcl_num_starts, startX,
-        optX, &optCrit);
+        optX, &optCrit, allDesigns, allCrits_data, allCrits_size);
 
     time(&end_t);
     double diff_t = difftime(end_t, start_t);
 
     export_to_csv("OptimalDesign_Output.csv", optX);
     printf("Complete! Time: %.2f seconds | D-Criterion: %f\n", diff_t, optCrit);
+    if (pcl_write_restarts) {
+        FILE *fd = fopen("restart_diagnostics.csv", "w");
+        if (fd) {
+            fprintf(fd, "restart_id,criterion_value\n");
+            for (int k = 0; k < allCrits_size[0]; k++) fprintf(fd, "%d,%.12f\n", k + 1, allCrits_data[k]);
+            fclose(fd);
+        }
+        char fname[64];
+        for (int k = 0; k < allCrits_size[0]; k++) {
+            snprintf(fname, sizeof(fname), "restart_design_%02d.csv", k + 1);
+            export_slice_to_csv(fname, allDesigns, k);
+        }
+        printf("Wrote restart_diagnostics.csv and restart_design_01..%02d.csv\n", allCrits_size[0]);
+    }
 
     DesignWizardVn_App_GapPrimary_terminate();
     return 0;

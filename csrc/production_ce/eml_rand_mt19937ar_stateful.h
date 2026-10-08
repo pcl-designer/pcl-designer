@@ -4,7 +4,7 @@
  * File: eml_rand_mt19937ar_stateful.h
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
 #ifndef EML_RAND_MT19937AR_STATEFUL_H

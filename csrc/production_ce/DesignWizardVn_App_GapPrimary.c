@@ -4,7 +4,7 @@
  * File: DesignWizardVn_App_GapPrimary.c
  *
  * MATLAB Coder version            : 24.1
- * C/C++ source code generated on  : 03-Oct-2026 17:22:39
+ * C/C++ source code generated on  : 08-Oct-2026 16:49:52
  */
 
 /* Include Files */
@@ -12,19 +12,19 @@
 #include "DesignWizardVn_App_GapPrimary_data.h"
 #include "DesignWizardVn_App_GapPrimary_emxutil.h"
 #include "DesignWizardVn_App_GapPrimary_initialize.h"
+#include "DesignWizardVn_App_GapPrimary_rtwutil.h"
 #include "DesignWizardVn_App_GapPrimary_types.h"
 #include "blockedSummation.h"
-#include "chol.h"
 #include "eml_mtimes_helper.h"
+#include "gjs_full_rule.h"
+#include "minOrMax.h"
 #include "mldivide.h"
 #include "mod.h"
 #include "mtimes.h"
 #include "rand.h"
-#include "rng.h"
+#include "repmat.h"
 #include "rt_nonfinite.h"
 #include "sort.h"
-#include "strcmp.h"
-#include "sum.h"
 #include "var.h"
 #include "xpotrf.h"
 #include "omp.h"
@@ -33,6 +33,23 @@
 #include <string.h>
 
 /* Variable Definitions */
+static const char cv[128] = {
+    '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\a',   '\b',
+    '\t',   '\n',   '\v',   '\f',   '\r',   '\x0e', '\x0f', '\x10', '\x11',
+    '\x12', '\x13', '\x14', '\x15', '\x16', '\x17', '\x18', '\x19', '\x1a',
+    '\x1b', '\x1c', '\x1d', '\x1e', '\x1f', ' ',    '!',    '\"',   '#',
+    '$',    '%',    '&',    '\'',   '(',    ')',    '*',    '+',    ',',
+    '-',    '.',    '/',    '0',    '1',    '2',    '3',    '4',    '5',
+    '6',    '7',    '8',    '9',    ':',    ';',    '<',    '=',    '>',
+    '?',    '@',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
+    'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',    'p',
+    'q',    'r',    's',    't',    'u',    'v',    'w',    'x',    'y',
+    'z',    '[',    '\\',   ']',    '^',    '_',    '`',    'a',    'b',
+    'c',    'd',    'e',    'f',    'g',    'h',    'i',    'j',    'k',
+    'l',    'm',    'n',    'o',    'p',    'q',    'r',    's',    't',
+    'u',    'v',    'w',    'x',    'y',    'z',    '{',    '|',    '}',
+    '~',    '\x7f'};
+
 static const double dv[16] = {
     -4.6887389393058179, -3.8694479048601225,  -3.176999161979956,
     -2.5462021578474809, -1.9517879909162539,  -1.3802585391988806,
@@ -70,37 +87,38 @@ static double b_copula_pmf_eta(const emxArray_real_T *y,
 static void binary_expand_op(emxArray_real_T *in1, int in2,
                              const emxArray_real_T *in3);
 
-static void binary_expand_op_1(double in1_data[], int in1_size[2],
-                               const emxArray_real_T *in2, int in3,
-                               const emxArray_real_T *in4, double in5, int in6,
-                               int in7);
+static void binary_expand_op_10(emxArray_real_T *in1,
+                                const emxArray_real_T *in2, int in3,
+                                const emxArray_real_T *in4);
 
-static void binary_expand_op_11(emxArray_real_T *in1, double in2,
+static void binary_expand_op_12(emxArray_real_T *in1, double in2,
                                 const emxArray_real_T *in3);
 
 static void binary_expand_op_2(double in1_data[], int in1_size[2],
                                const emxArray_real_T *in2, int in3,
+                               const emxArray_real_T *in4, double in5, int in6,
+                               int in7);
+
+static void binary_expand_op_3(double in1_data[], int in1_size[2],
+                               const emxArray_real_T *in2, int in3,
                                const emxArray_real_T *in4, double in5, int in6);
 
-static void binary_expand_op_3(emxArray_real_T *in1, int in2,
+static void binary_expand_op_4(emxArray_real_T *in1, int in2,
                                const emxArray_real_T *in3,
                                const emxArray_real_T *in4);
 
-static void binary_expand_op_4(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_5(emxArray_real_T *in1, const emxArray_real_T *in2,
                                const emxArray_real_T *in3);
 
-static void binary_expand_op_5(emxArray_real_T *in1, double in2,
+static void binary_expand_op_6(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3);
 
-static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_8(emxArray_real_T *in1, const emxArray_real_T *in2,
                                double in3, const emxArray_real_T *in4,
                                const emxArray_real_T *in5);
 
-static void binary_expand_op_8(emxArray_real_T *in1, double in2,
+static void binary_expand_op_9(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3);
-
-static void binary_expand_op_9(emxArray_real_T *in1, const emxArray_real_T *in2,
-                               int in3, const emxArray_real_T *in4);
 
 static void
 build_model_row(const double wp_lev_data[], const int wp_lev_size[2],
@@ -156,11 +174,18 @@ static int coordinate_exchange_otf(
     bool is_glmm_exact, bool is_copula_pcl, bool is_copula_pcl_godambe,
     bool is_indep_glm, const emxArray_cell_wrap_0 *modelTerms,
     double num_starts, bool has_start, const emxArray_real_T *start_idx_vec,
-    double best_idx_data[], double *best_crit);
+    double best_idx_data[], emxArray_real_T *best_idxs,
+    double best_crits_data[], double *best_crit, int *best_crits_size);
 
 static double copula_pmf_eta(const double y[2], const double xb[2],
                              const emxArray_real_T *alpha, double lam,
                              double type, int K);
+
+static void design_to_idx(const emxArray_real_T *startX, double m,
+                          const emxArray_real_T *n, double N,
+                          const emxArray_real_T *wp_combos,
+                          const emxArray_real_T *sp_combos,
+                          emxArray_real_T *idx);
 
 static double evaluate_copula_pmf(const double y[2], const emxArray_real_T *Xwp,
                                   const emxArray_real_T *th, int K, double q,
@@ -173,7 +198,12 @@ static double generate_combos(const cell_wrap_0 levelSets_data[],
 
 static void plus(emxArray_real_T *in1, const emxArray_real_T *in2);
 
-static double rt_powd_snf(double u0, double u1);
+static void reconstruct_design(const double idx_data[], double m,
+                               const emxArray_real_T *n, double N,
+                               const emxArray_real_T *wp_combos,
+                               const emxArray_real_T *sp_combos,
+                               const emxArray_cell_wrap_0 *modelTerms, double q,
+                               emxArray_real_T *X);
 
 static double rt_roundd_snf(double u);
 
@@ -453,7 +483,7 @@ static void b_computeFisher_Copula(const emxArray_real_T *theta,
             I_data[i2] += n_outcomes_tmp * -X_pair_data[i2];
           }
         } else {
-          binary_expand_op_11(b_I, n_outcomes_tmp, Hess);
+          binary_expand_op_12(b_I, n_outcomes_tmp, Hess);
           I_data = b_I->data;
         }
       }
@@ -709,44 +739,92 @@ static void binary_expand_op(emxArray_real_T *in1, int in2,
 }
 
 /*
- * Arguments    : double in1_data[]
- *                int in1_size[2]
+ * Arguments    : emxArray_real_T *in1
  *                const emxArray_real_T *in2
  *                int in3
  *                const emxArray_real_T *in4
- *                double in5
- *                int in6
- *                int in7
  * Return Type  : void
  */
-static void binary_expand_op_1(double in1_data[], int in1_size[2],
-                               const emxArray_real_T *in2, int in3,
-                               const emxArray_real_T *in4, double in5, int in6,
-                               int in7)
+static void binary_expand_op_10(emxArray_real_T *in1,
+                                const emxArray_real_T *in2, int in3,
+                                const emxArray_real_T *in4)
 {
+  emxArray_real_T *b_in1;
+  emxArray_real_T *b_in4;
   const double *in2_data;
   const double *in4_data;
+  double b_in2;
+  double *b_in1_data;
+  double *b_in4_data;
+  double *in1_data;
+  int aux_0_1;
+  int aux_1_1;
+  int b_loop_ub;
   int i;
+  int i1;
   int loop_ub;
+  int stride_0_0;
   int stride_0_1;
-  int stride_1_1;
+  int stride_1_0_tmp;
   in4_data = in4->data;
   in2_data = in2->data;
-  in1_size[0] = 1;
-  i = (in7 - in6) + 1;
-  if (i == 1) {
-    loop_ub = in2->size[1];
-  } else {
-    loop_ub = i;
-  }
-  in1_size[1] = loop_ub;
-  stride_0_1 = (in2->size[1] != 1);
-  stride_1_1 = (i != 1);
+  in1_data = in1->data;
+  b_in2 = in2_data[in3];
+  emxInit_real_T(&b_in4, 2);
+  loop_ub = in4->size[0];
+  i = b_in4->size[0] * b_in4->size[1];
+  b_in4->size[0] = loop_ub;
+  b_in4->size[1] = loop_ub;
+  emxEnsureCapacity_real_T(b_in4, i);
+  b_in4_data = b_in4->data;
   for (i = 0; i < loop_ub; i++) {
-    in1_data[i] =
-        in2_data[in3 + in2->size[0] * (i * stride_0_1)] -
-        in4_data[((int)in5 + in4->size[0] * (in6 + i * stride_1_1)) - 1];
+    for (i1 = 0; i1 < loop_ub; i1++) {
+      b_in4_data[i1 + b_in4->size[0] * i] =
+          in4_data[i1 + in4->size[0] * in3] * in4_data[i + in4->size[0] * in3];
+    }
   }
+  emxInit_real_T(&b_in1, 2);
+  if (b_in4->size[0] == 1) {
+    loop_ub = in1->size[0];
+  } else {
+    loop_ub = b_in4->size[0];
+  }
+  i = b_in1->size[0] * b_in1->size[1];
+  b_in1->size[0] = loop_ub;
+  if (b_in4->size[1] == 1) {
+    b_loop_ub = in1->size[1];
+  } else {
+    b_loop_ub = b_in4->size[1];
+  }
+  b_in1->size[1] = b_loop_ub;
+  emxEnsureCapacity_real_T(b_in1, i);
+  b_in1_data = b_in1->data;
+  stride_0_0 = (in1->size[0] != 1);
+  stride_0_1 = (in1->size[1] != 1);
+  stride_1_0_tmp = (b_in4->size[0] != 1);
+  aux_0_1 = 0;
+  aux_1_1 = 0;
+  for (i = 0; i < b_loop_ub; i++) {
+    for (i1 = 0; i1 < loop_ub; i1++) {
+      b_in1_data[i1 + b_in1->size[0] * i] =
+          in1_data[i1 * stride_0_0 + in1->size[0] * aux_0_1] +
+          b_in2 * b_in4_data[i1 * stride_1_0_tmp + b_in4->size[0] * aux_1_1];
+    }
+    aux_1_1 += stride_1_0_tmp;
+    aux_0_1 += stride_0_1;
+  }
+  emxFree_real_T(&b_in4);
+  i = in1->size[0] * in1->size[1];
+  in1->size[0] = loop_ub;
+  in1->size[1] = b_loop_ub;
+  emxEnsureCapacity_real_T(in1, i);
+  in1_data = in1->data;
+  for (i = 0; i < b_loop_ub; i++) {
+    for (i1 = 0; i1 < loop_ub; i1++) {
+      in1_data[i1 + in1->size[0] * i] = b_in1_data[i1 + b_in1->size[0] * i];
+    }
+  }
+  emxFree_real_T(&b_in1);
 }
 
 /*
@@ -755,7 +833,7 @@ static void binary_expand_op_1(double in1_data[], int in1_size[2],
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_11(emxArray_real_T *in1, double in2,
+static void binary_expand_op_12(emxArray_real_T *in1, double in2,
                                 const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -826,9 +904,50 @@ static void binary_expand_op_11(emxArray_real_T *in1, double in2,
  *                const emxArray_real_T *in4
  *                double in5
  *                int in6
+ *                int in7
  * Return Type  : void
  */
 static void binary_expand_op_2(double in1_data[], int in1_size[2],
+                               const emxArray_real_T *in2, int in3,
+                               const emxArray_real_T *in4, double in5, int in6,
+                               int in7)
+{
+  const double *in2_data;
+  const double *in4_data;
+  int i;
+  int loop_ub;
+  int stride_0_1;
+  int stride_1_1;
+  in4_data = in4->data;
+  in2_data = in2->data;
+  in1_size[0] = 1;
+  i = (in7 - in6) + 1;
+  if (i == 1) {
+    loop_ub = in2->size[1];
+  } else {
+    loop_ub = i;
+  }
+  in1_size[1] = loop_ub;
+  stride_0_1 = (in2->size[1] != 1);
+  stride_1_1 = (i != 1);
+  for (i = 0; i < loop_ub; i++) {
+    in1_data[i] =
+        in2_data[in3 + in2->size[0] * (i * stride_0_1)] -
+        in4_data[((int)in5 + in4->size[0] * (in6 + i * stride_1_1)) - 1];
+  }
+}
+
+/*
+ * Arguments    : double in1_data[]
+ *                int in1_size[2]
+ *                const emxArray_real_T *in2
+ *                int in3
+ *                const emxArray_real_T *in4
+ *                double in5
+ *                int in6
+ * Return Type  : void
+ */
+static void binary_expand_op_3(double in1_data[], int in1_size[2],
                                const emxArray_real_T *in2, int in3,
                                const emxArray_real_T *in4, double in5, int in6)
 {
@@ -862,7 +981,7 @@ static void binary_expand_op_2(double in1_data[], int in1_size[2],
  *                const emxArray_real_T *in4
  * Return Type  : void
  */
-static void binary_expand_op_3(emxArray_real_T *in1, int in2,
+static void binary_expand_op_4(emxArray_real_T *in1, int in2,
                                const emxArray_real_T *in3,
                                const emxArray_real_T *in4)
 {
@@ -891,7 +1010,7 @@ static void binary_expand_op_3(emxArray_real_T *in1, int in2,
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_4(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_5(emxArray_real_T *in1, const emxArray_real_T *in2,
                                const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -945,7 +1064,7 @@ static void binary_expand_op_4(emxArray_real_T *in1, const emxArray_real_T *in2,
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_5(emxArray_real_T *in1, double in2,
+static void binary_expand_op_6(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -1016,7 +1135,7 @@ static void binary_expand_op_5(emxArray_real_T *in1, double in2,
  *                const emxArray_real_T *in5
  * Return Type  : void
  */
-static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
+static void binary_expand_op_8(emxArray_real_T *in1, const emxArray_real_T *in2,
                                double in3, const emxArray_real_T *in4,
                                const emxArray_real_T *in5)
 {
@@ -1077,7 +1196,7 @@ static void binary_expand_op_7(emxArray_real_T *in1, const emxArray_real_T *in2,
  *                const emxArray_real_T *in3
  * Return Type  : void
  */
-static void binary_expand_op_8(emxArray_real_T *in1, double in2,
+static void binary_expand_op_9(emxArray_real_T *in1, double in2,
                                const emxArray_real_T *in3)
 {
   emxArray_real_T *b_in1;
@@ -1140,94 +1259,6 @@ static void binary_expand_op_8(emxArray_real_T *in1, double in2,
     aux_0_1 += stride_0_1;
   }
   emxFree_real_T(&b_in3);
-  i = in1->size[0] * in1->size[1];
-  in1->size[0] = loop_ub;
-  in1->size[1] = b_loop_ub;
-  emxEnsureCapacity_real_T(in1, i);
-  in1_data = in1->data;
-  for (i = 0; i < b_loop_ub; i++) {
-    for (i1 = 0; i1 < loop_ub; i1++) {
-      in1_data[i1 + in1->size[0] * i] = b_in1_data[i1 + b_in1->size[0] * i];
-    }
-  }
-  emxFree_real_T(&b_in1);
-}
-
-/*
- * Arguments    : emxArray_real_T *in1
- *                const emxArray_real_T *in2
- *                int in3
- *                const emxArray_real_T *in4
- * Return Type  : void
- */
-static void binary_expand_op_9(emxArray_real_T *in1, const emxArray_real_T *in2,
-                               int in3, const emxArray_real_T *in4)
-{
-  emxArray_real_T *b_in1;
-  emxArray_real_T *b_in4;
-  const double *in2_data;
-  const double *in4_data;
-  double b_in2;
-  double *b_in1_data;
-  double *b_in4_data;
-  double *in1_data;
-  int aux_0_1;
-  int aux_1_1;
-  int b_loop_ub;
-  int i;
-  int i1;
-  int loop_ub;
-  int stride_0_0;
-  int stride_0_1;
-  int stride_1_0_tmp;
-  in4_data = in4->data;
-  in2_data = in2->data;
-  in1_data = in1->data;
-  b_in2 = in2_data[in3];
-  emxInit_real_T(&b_in4, 2);
-  loop_ub = in4->size[0];
-  i = b_in4->size[0] * b_in4->size[1];
-  b_in4->size[0] = loop_ub;
-  b_in4->size[1] = loop_ub;
-  emxEnsureCapacity_real_T(b_in4, i);
-  b_in4_data = b_in4->data;
-  for (i = 0; i < loop_ub; i++) {
-    for (i1 = 0; i1 < loop_ub; i1++) {
-      b_in4_data[i1 + b_in4->size[0] * i] =
-          in4_data[i1 + in4->size[0] * in3] * in4_data[i + in4->size[0] * in3];
-    }
-  }
-  emxInit_real_T(&b_in1, 2);
-  if (b_in4->size[0] == 1) {
-    loop_ub = in1->size[0];
-  } else {
-    loop_ub = b_in4->size[0];
-  }
-  i = b_in1->size[0] * b_in1->size[1];
-  b_in1->size[0] = loop_ub;
-  if (b_in4->size[1] == 1) {
-    b_loop_ub = in1->size[1];
-  } else {
-    b_loop_ub = b_in4->size[1];
-  }
-  b_in1->size[1] = b_loop_ub;
-  emxEnsureCapacity_real_T(b_in1, i);
-  b_in1_data = b_in1->data;
-  stride_0_0 = (in1->size[0] != 1);
-  stride_0_1 = (in1->size[1] != 1);
-  stride_1_0_tmp = (b_in4->size[0] != 1);
-  aux_0_1 = 0;
-  aux_1_1 = 0;
-  for (i = 0; i < b_loop_ub; i++) {
-    for (i1 = 0; i1 < loop_ub; i1++) {
-      b_in1_data[i1 + b_in1->size[0] * i] =
-          in1_data[i1 * stride_0_0 + in1->size[0] * aux_0_1] +
-          b_in2 * b_in4_data[i1 * stride_1_0_tmp + b_in4->size[0] * aux_1_1];
-    }
-    aux_1_1 += stride_1_0_tmp;
-    aux_0_1 += stride_0_1;
-  }
-  emxFree_real_T(&b_in4);
   i = in1->size[0] * in1->size[1];
   in1->size[0] = loop_ub;
   in1->size[1] = b_loop_ub;
@@ -1794,7 +1825,7 @@ static void c_computeFisher_Copula(const emxArray_real_T *theta,
         I_data[i] += PrY_data[b_i] * allY_data[i];
       }
     } else {
-      binary_expand_op_9(b_I, PrY, b_i, Scores);
+      binary_expand_op_10(b_I, PrY, b_i, Scores);
       I_data = b_I->data;
     }
   }
@@ -2022,6 +2053,7 @@ static double computeCriterion_otf(
     bool is_indep_glm, const emxArray_cell_wrap_0 *modelTerms)
 {
   static const char b_cv[7] = {'a', 'v', 'e', 'r', 'a', 'g', 'e'};
+  emxArray_boolean_T *x;
   emxArray_real_T *H_wp;
   emxArray_real_T *I_cond;
   emxArray_real_T *I_total;
@@ -2040,7 +2072,6 @@ static double computeCriterion_otf(
   const double *weights_data;
   const double *wp_combos_data;
   double curr_start;
-  double d;
   double penalty;
   double sp_val_idx;
   double *I_total_data;
@@ -2062,13 +2093,14 @@ static double computeCriterion_otf(
   int i3;
   int idx;
   int kk;
-  int last;
   int loop_ub;
   int loop_ub_tmp;
+  int sub;
   int t;
   int wp;
   bool b_bool;
   bool exitg1;
+  bool *x_data;
   thetaGrid_data = thetaGrid->data;
   sp_combos_data = sp_combos->data;
   wp_combos_data = wp_combos->data;
@@ -2119,10 +2151,10 @@ static double computeCriterion_otf(
       wp_combos_size[0] = 1;
       sp_combos_size[0] = 1;
     }
-    for (loop_ub = 0; loop_ub < i1; loop_ub++) {
+    for (sub = 0; sub < i1; sub++) {
       double b_sp_combos_data[20];
       double b_wp_combos_data[20];
-      idx = (int)((curr_start + ((double)loop_ub + 1.0)) - 1.0) - 1;
+      idx = (int)((curr_start + ((double)sub + 1.0)) - 1.0) - 1;
       sp_val_idx = idx_sp_full_data[idx];
       b_loop_ub_tmp = wp_combos->size[1];
       wp_combos_size[1] = wp_combos->size[1];
@@ -2146,7 +2178,7 @@ static double computeCriterion_otf(
     }
     curr_start += n_data[wp];
   }
-  last = thetaGrid->size[0];
+  loop_ub = thetaGrid->size[0];
   emxInit_real_T(&logDets, 1);
   i = logDets->size[0];
   logDets->size[0] = thetaGrid->size[0];
@@ -2163,7 +2195,7 @@ static double computeCriterion_otf(
   emxInit_real_T(&I_cond, 2);
   emxInit_real_T(&r, 2);
   emxInit_real_T(&b_Xwp, 2);
-  for (t = 0; t < last; t++) {
+  for (t = 0; t < loop_ub; t++) {
     i = I_total->size[0] * I_total->size[1];
     I_total->size[0] = (int)p;
     I_total->size[1] = (int)p;
@@ -2174,6 +2206,7 @@ static double computeCriterion_otf(
     }
     curr_start = 1.0;
     for (wp = 0; wp < i3; wp++) {
+      double d;
       /*  DYNAMIC ALLOCATION: Prevents Coder variable-size slicing error */
       d = n_data[wp];
       i = (int)n_data[wp];
@@ -2182,18 +2215,18 @@ static double computeCriterion_otf(
       Xwp->size[1] = (int)q;
       emxEnsureCapacity_real_T(Xwp, i1);
       Xwp_data = Xwp->data;
-      loop_ub = (int)d * (int)q;
-      for (i1 = 0; i1 < loop_ub; i1++) {
+      sub = (int)d * (int)q;
+      for (i1 = 0; i1 < sub; i1++) {
         Xwp_data[i1] = 0.0;
       }
-      for (loop_ub = 0; loop_ub < i; loop_ub++) {
+      for (b_loop_ub_tmp = 0; b_loop_ub_tmp < i; b_loop_ub_tmp++) {
         double tmp_data[100];
-        idx = (int)((curr_start + ((double)loop_ub + 1.0)) - 1.0);
+        idx = (int)((curr_start + ((double)b_loop_ub_tmp + 1.0)) - 1.0);
         for (i1 = 0; i1 < loop_ub_tmp; i1++) {
           tmp_data[i1] = X_all_data[(idx + X_all->size[0] * i1) - 1];
         }
         for (i1 = 0; i1 < loop_ub_tmp; i1++) {
-          Xwp_data[loop_ub + Xwp->size[0] * i1] = tmp_data[i1];
+          Xwp_data[b_loop_ub_tmp + Xwp->size[0] * i1] = tmp_data[i1];
         }
       }
       if (is_glmm_approx) {
@@ -2211,16 +2244,16 @@ static double computeCriterion_otf(
         /*  ===================================================================
          */
         if ((double)K_int - 1.0 < 1.0) {
-          loop_ub = 0;
+          sub = 0;
         } else {
-          loop_ub = K_int - 1;
+          sub = K_int - 1;
         }
         i1 = alpha->size[0] * alpha->size[1];
         alpha->size[0] = 1;
-        alpha->size[1] = loop_ub;
+        alpha->size[1] = sub;
         emxEnsureCapacity_real_T(alpha, i1);
         alpha_data = alpha->data;
-        for (i1 = 0; i1 < loop_ub; i1++) {
+        for (i1 = 0; i1 < sub; i1++) {
           alpha_data[i1] = idx_wp_data[i1];
         }
         if (((double)K_int - 1.0) + 1.0 > ((double)K_int - 1.0) + q) {
@@ -2234,8 +2267,8 @@ static double computeCriterion_otf(
           I_wp->size[1] = thetaGrid->size[1];
           emxEnsureCapacity_real_T(I_wp, i);
           I_wp_data = I_wp->data;
-          loop_ub = idx_wp->size[0] * idx_wp->size[0];
-          for (i = 0; i < loop_ub; i++) {
+          sub = idx_wp->size[0] * idx_wp->size[0];
+          for (i = 0; i < sub; i++) {
             I_wp_data[i] = 0.0;
           }
         } else {
@@ -2276,8 +2309,8 @@ static double computeCriterion_otf(
               idx_sp_full_data = r->data;
               if ((I_cond->size[0] == r->size[0]) &&
                   (I_cond->size[1] == r->size[1])) {
-                loop_ub = I_cond->size[0] * I_cond->size[1];
-                for (i2 = 0; i2 < loop_ub; i2++) {
+                sub = I_cond->size[0] * I_cond->size[1];
+                for (i2 = 0; i2 < sub; i2++) {
                   alpha_data[i2] += idx_sp_full_data[i2];
                 }
               } else {
@@ -2287,12 +2320,12 @@ static double computeCriterion_otf(
             }
             if ((I_wp->size[0] == I_cond->size[0]) &&
                 (I_wp->size[1] == I_cond->size[1])) {
-              loop_ub = I_wp->size[0] * I_wp->size[1];
-              for (i2 = 0; i2 < loop_ub; i2++) {
+              sub = I_wp->size[0] * I_wp->size[1];
+              for (i2 = 0; i2 < sub; i2++) {
                 I_wp_data[i2] += dv1[kk] * alpha_data[i2];
               }
             } else {
-              binary_expand_op_5(I_wp, dv1[kk], I_cond);
+              binary_expand_op_6(I_wp, dv1[kk], I_cond);
               I_wp_data = I_wp->data;
             }
           }
@@ -2330,16 +2363,16 @@ static double computeCriterion_otf(
         /*  ===================================================================
          */
         if ((double)K_int - 1.0 < 1.0) {
-          loop_ub = 0;
+          sub = 0;
         } else {
-          loop_ub = K_int - 1;
+          sub = K_int - 1;
         }
         i1 = alpha->size[0] * alpha->size[1];
         alpha->size[0] = 1;
-        alpha->size[1] = loop_ub;
+        alpha->size[1] = sub;
         emxEnsureCapacity_real_T(alpha, i1);
         alpha_data = alpha->data;
-        for (i1 = 0; i1 < loop_ub; i1++) {
+        for (i1 = 0; i1 < sub; i1++) {
           alpha_data[i1] = idx_wp_data[i1];
         }
         if (((double)K_int - 1.0) + 1.0 > ((double)K_int - 1.0) + q) {
@@ -2352,8 +2385,8 @@ static double computeCriterion_otf(
         I_wp->size[1] = thetaGrid->size[1];
         emxEnsureCapacity_real_T(I_wp, i2);
         I_wp_data = I_wp->data;
-        loop_ub = idx_wp->size[0] * idx_wp->size[0];
-        for (i2 = 0; i2 < loop_ub; i2++) {
+        sub = idx_wp->size[0] * idx_wp->size[0];
+        for (i2 = 0; i2 < sub; i2++) {
           I_wp_data[i2] = 0.0;
         }
         for (b_i = 0; b_i < i; b_i++) {
@@ -2371,8 +2404,8 @@ static double computeCriterion_otf(
           univariateOrdinalFisher(sp_val_idx, alpha, K_int, b_Xwp, r);
           idx_sp_full_data = r->data;
           if ((I_wp->size[0] == r->size[0]) && (I_wp->size[1] == r->size[1])) {
-            loop_ub = I_wp->size[0] * I_wp->size[1];
-            for (i2 = 0; i2 < loop_ub; i2++) {
+            sub = I_wp->size[0] * I_wp->size[1];
+            for (i2 = 0; i2 < sub; i2++) {
               I_wp_data[i2] += idx_sp_full_data[i2];
             }
           } else {
@@ -2425,10 +2458,10 @@ static double computeCriterion_otf(
           idx_wp_data = idx_wp->data;
           idx_wp_data[0] = I_wp_data[0];
         } else {
-          loop_ub = I_wp->size[0];
+          sub = I_wp->size[0];
           idx = I_wp->size[1];
-          if (loop_ub <= idx) {
-            idx = loop_ub;
+          if (sub <= idx) {
+            idx = sub;
           }
           if (I_wp->size[1] <= 0) {
             idx = 0;
@@ -2442,12 +2475,12 @@ static double computeCriterion_otf(
             idx_wp_data[b_i] = I_wp_data[b_i + I_wp->size[0] * b_i];
           }
         }
-        loop_ub = idx_wp->size[0];
+        sub = idx_wp->size[0];
         i = idx_sp_full->size[0];
         idx_sp_full->size[0] = idx_wp->size[0];
         emxEnsureCapacity_real_T(idx_sp_full, i);
         idx_sp_full_data = idx_sp_full->data;
-        for (b_i = 0; b_i < loop_ub; b_i++) {
+        for (b_i = 0; b_i < sub; b_i++) {
           idx_sp_full_data[b_i] = fabs(idx_wp_data[b_i]);
         }
         if (idx_sp_full->size[0] <= 2) {
@@ -2467,7 +2500,7 @@ static double computeCriterion_otf(
             idx = 0;
             b_i = 2;
             exitg1 = false;
-            while ((!exitg1) && (b_i <= loop_ub)) {
+            while ((!exitg1) && (b_i <= sub)) {
               if (!rtIsNaN(idx_sp_full_data[b_i - 1])) {
                 idx = b_i;
                 exitg1 = true;
@@ -2481,7 +2514,7 @@ static double computeCriterion_otf(
           } else {
             sp_val_idx = idx_sp_full_data[idx - 1];
             i = idx + 1;
-            for (b_i = i; b_i <= loop_ub; b_i++) {
+            for (b_i = i; b_i <= sub; b_i++) {
               d = idx_sp_full_data[b_i - 1];
               if (sp_val_idx < d) {
                 sp_val_idx = d;
@@ -2496,8 +2529,8 @@ static double computeCriterion_otf(
         I_cond->size[1] = I_wp->size[0];
         emxEnsureCapacity_real_T(I_cond, i);
         alpha_data = I_cond->data;
-        loop_ub = I_wp->size[0] * I_wp->size[0];
-        for (i = 0; i < loop_ub; i++) {
+        sub = I_wp->size[0] * I_wp->size[0];
+        for (i = 0; i < sub; i++) {
           alpha_data[i] = 0.0;
         }
         if (I_wp->size[0] > 0) {
@@ -2512,19 +2545,19 @@ static double computeCriterion_otf(
           Xwp->size[1] = I_wp->size[1];
           emxEnsureCapacity_real_T(Xwp, i);
           Xwp_data = Xwp->data;
-          loop_ub = I_wp->size[0] * I_wp->size[1];
-          for (i = 0; i < loop_ub; i++) {
+          sub = I_wp->size[0] * I_wp->size[1];
+          for (i = 0; i < sub; i++) {
             Xwp_data[i] = I_wp_data[i] + sp_val_idx * alpha_data[i];
           }
           mldivide(Xwp, H_wp, r);
         } else {
-          binary_expand_op_7(r, I_wp, sp_val_idx, I_cond, H_wp);
+          binary_expand_op_8(r, I_wp, sp_val_idx, I_cond, H_wp);
         }
         mtimes(H_wp, r, I_wp);
         I_wp_data = I_wp->data;
         /*  Symmetrize to remove tiny floating-point asymmetries. */
         if (I_wp->size[0] == I_wp->size[1]) {
-          loop_ub = I_wp->size[0];
+          sub = I_wp->size[0];
           i = Xwp->size[0] * Xwp->size[1];
           Xwp->size[0] = I_wp->size[0];
           idx = I_wp->size[1];
@@ -2532,23 +2565,23 @@ static double computeCriterion_otf(
           emxEnsureCapacity_real_T(Xwp, i);
           Xwp_data = Xwp->data;
           for (i = 0; i < idx; i++) {
-            for (i1 = 0; i1 < loop_ub; i1++) {
+            for (i1 = 0; i1 < sub; i1++) {
               Xwp_data[i1 + Xwp->size[0] * i] =
                   0.5 * (I_wp_data[i1 + I_wp->size[0] * i] +
                          I_wp_data[i + I_wp->size[0] * i1]);
             }
           }
           i = I_wp->size[0] * I_wp->size[1];
-          I_wp->size[0] = loop_ub;
+          I_wp->size[0] = sub;
           I_wp->size[1] = idx;
           emxEnsureCapacity_real_T(I_wp, i);
           I_wp_data = I_wp->data;
-          loop_ub = Xwp->size[0] * Xwp->size[1];
-          for (i = 0; i < loop_ub; i++) {
+          sub = Xwp->size[0] * Xwp->size[1];
+          for (i = 0; i < sub; i++) {
             I_wp_data[i] = Xwp_data[i];
           }
         } else {
-          binary_expand_op_6(I_wp);
+          binary_expand_op_7(I_wp);
           I_wp_data = I_wp->data;
         }
       } else if (is_copula_pcl) {
@@ -2578,8 +2611,8 @@ static double computeCriterion_otf(
       }
       if ((I_total->size[0] == I_wp->size[0]) &&
           (I_total->size[1] == I_wp->size[1])) {
-        loop_ub = I_total->size[0] * I_total->size[1];
-        for (i = 0; i < loop_ub; i++) {
+        sub = I_total->size[0] * I_total->size[1];
+        for (i = 0; i < sub; i++) {
           I_total_data[i] += I_wp_data[i];
         }
       } else {
@@ -2595,50 +2628,41 @@ static double computeCriterion_otf(
     for (b_i = 0; b_i < i; b_i++) {
       I_total_data[b_i + I_total->size[0] * b_i] += 0.0001;
     }
-    i = I_cond->size[0] * I_cond->size[1];
-    I_cond->size[0] = I_total->size[0];
-    I_cond->size[1] = I_total->size[1];
-    emxEnsureCapacity_real_T(I_cond, i);
-    alpha_data = I_cond->data;
-    loop_ub = I_total->size[0] * I_total->size[1];
-    for (i = 0; i < loop_ub; i++) {
-      alpha_data[i] = I_total_data[i];
-    }
-    loop_ub = I_total->size[0];
+    sub = I_total->size[0];
     idx = I_total->size[1];
-    if (loop_ub <= idx) {
-      idx = loop_ub;
+    if (sub <= idx) {
+      idx = sub;
     }
-    loop_ub = 0;
+    sub = 0;
     b_loop_ub_tmp = 0;
     if (idx != 0) {
-      b_loop_ub_tmp = xpotrf(idx, I_cond, I_total->size[0]);
-      alpha_data = I_cond->data;
+      b_loop_ub_tmp = xpotrf(idx, I_total, I_total->size[0]);
+      I_total_data = I_total->data;
       if (b_loop_ub_tmp == 0) {
-        loop_ub = idx;
+        sub = idx;
       } else {
-        loop_ub = b_loop_ub_tmp - 1;
+        sub = b_loop_ub_tmp - 1;
       }
-      for (idx = 0; idx <= loop_ub - 2; idx++) {
+      for (idx = 0; idx <= sub - 2; idx++) {
         i = idx + 2;
-        for (b_i = i; b_i <= loop_ub; b_i++) {
-          alpha_data[(b_i + I_cond->size[0] * idx) - 1] = 0.0;
+        for (b_i = i; b_i <= sub; b_i++) {
+          I_total_data[(b_i + I_total->size[0] * idx) - 1] = 0.0;
         }
       }
     }
-    if (loop_ub < 1) {
-      loop_ub = 0;
+    if (sub < 1) {
+      sub = 0;
     }
     if (b_loop_ub_tmp == 0) {
-      if (loop_ub == 1) {
+      if (sub == 1) {
         i = idx_wp->size[0];
         idx_wp->size[0] = 1;
         emxEnsureCapacity_real_T(idx_wp, i);
         idx_wp_data = idx_wp->data;
-        idx_wp_data[0] = alpha_data[0];
+        idx_wp_data[0] = I_total_data[0];
       } else {
-        if (loop_ub > 0) {
-          idx = loop_ub;
+        if (sub > 0) {
+          idx = sub;
         } else {
           idx = 0;
         }
@@ -2648,7 +2672,7 @@ static double computeCriterion_otf(
         idx_wp_data = idx_wp->data;
         i = idx - 1;
         for (b_i = 0; b_i <= i; b_i++) {
-          idx_wp_data[b_i] = alpha_data[b_i + I_cond->size[0] * b_i];
+          idx_wp_data[b_i] = I_total_data[b_i + I_total->size[0] * b_i];
         }
       }
       b_loop_ub_tmp = idx_wp->size[0];
@@ -2696,49 +2720,65 @@ static double computeCriterion_otf(
   }
   if (b_bool) {
     sp_val_idx = 0.0;
-    loop_ub = weights->size[0];
-    for (i = 0; i < loop_ub; i++) {
+    b_loop_ub = weights->size[0];
+    for (i = 0; i < b_loop_ub; i++) {
       sp_val_idx += weights_data[i] * logDets_data[i];
     }
-  } else if (logDets->size[0] <= 2) {
-    if (logDets->size[0] == 1) {
-      sp_val_idx = logDets_data[0];
-    } else {
-      sp_val_idx = logDets_data[logDets->size[0] - 1];
-      if ((!(logDets_data[0] > sp_val_idx)) &&
-          ((!rtIsNaN(logDets_data[0])) || rtIsNaN(sp_val_idx))) {
-        sp_val_idx = logDets_data[0];
-      }
-    }
   } else {
-    if (!rtIsNaN(logDets_data[0])) {
-      idx = 1;
+    sp_val_idx = minimum(logDets);
+  }
+  /*  v0.2.9 guard: the G-J-S rule has negative vertex weights for p > 7. A node
+   */
+  /*  whose information is singular (fast_logdet returns -1e20) times a negative
+   */
+  /*  weight would score the design +huge, so any failed node rejects the
+   * design. */
+  /*  Applied only when some weight is negative, so the axial rule is unchanged.
+   */
+  emxInit_boolean_T(&x);
+  b_loop_ub = weights->size[0];
+  i = x->size[0];
+  x->size[0] = weights->size[0];
+  emxEnsureCapacity_boolean_T(x, i);
+  x_data = x->data;
+  for (i = 0; i < b_loop_ub; i++) {
+    x_data[i] = (weights_data[i] < 0.0);
+  }
+  b_bool = false;
+  idx = 1;
+  exitg1 = false;
+  while ((!exitg1) && (idx <= x->size[0])) {
+    if (x_data[idx - 1]) {
+      b_bool = true;
+      exitg1 = true;
     } else {
-      idx = 0;
-      b_i = 2;
-      exitg1 = false;
-      while ((!exitg1) && (b_i <= last)) {
-        if (!rtIsNaN(logDets_data[b_i - 1])) {
-          idx = b_i;
-          exitg1 = true;
-        } else {
-          b_i++;
-        }
-      }
-    }
-    if (idx == 0) {
-      sp_val_idx = logDets_data[0];
-    } else {
-      sp_val_idx = logDets_data[idx - 1];
-      i = idx + 1;
-      for (b_i = i; b_i <= last; b_i++) {
-        d = logDets_data[b_i - 1];
-        if (sp_val_idx > d) {
-          sp_val_idx = d;
-        }
-      }
+      idx++;
     }
   }
+  if (b_bool) {
+    i = x->size[0];
+    x->size[0] = thetaGrid->size[0];
+    emxEnsureCapacity_boolean_T(x, i);
+    x_data = x->data;
+    for (i = 0; i < loop_ub; i++) {
+      x_data[i] = (logDets_data[i] <= -1.0E+19);
+    }
+    b_bool = false;
+    idx = 1;
+    exitg1 = false;
+    while ((!exitg1) && (idx <= x->size[0])) {
+      if (x_data[idx - 1]) {
+        b_bool = true;
+        exitg1 = true;
+      } else {
+        idx++;
+      }
+    }
+    if (b_bool) {
+      sp_val_idx = -1.0E+20;
+    }
+  }
+  emxFree_boolean_T(&x);
   emxFree_real_T(&logDets);
   return sp_val_idx - penalty;
 }
@@ -3050,7 +3090,7 @@ static void computeFisher_Copula(const emxArray_real_T *theta,
             I_data[i2] += a * alpha0_data[i2];
           }
         } else {
-          binary_expand_op_8(b_I, a, U);
+          binary_expand_op_9(b_I, a, U);
           I_data = b_I->data;
         }
       }
@@ -3515,7 +3555,7 @@ static void computeFisher_GLMM_Exact(const emxArray_real_T *theta,
         y_data[i] += PrY_data[iy] * allY_data[i];
       }
     } else {
-      binary_expand_op_9(b_I, PrY, iy, Scores);
+      binary_expand_op_10(b_I, PrY, iy, Scores);
       y_data = b_I->data;
     }
   }
@@ -3555,7 +3595,10 @@ static void computeFisher_GLMM_Exact(const emxArray_real_T *theta,
  *                bool has_start
  *                const emxArray_real_T *start_idx_vec
  *                double best_idx_data[]
+ *                emxArray_real_T *best_idxs
+ *                double best_crits_data[]
  *                double *best_crit
+ *                int *best_crits_size
  * Return Type  : int
  */
 static int coordinate_exchange_otf(
@@ -3570,13 +3613,12 @@ static int coordinate_exchange_otf(
     bool is_glmm_exact, bool is_copula_pcl, bool is_copula_pcl_godambe,
     bool is_indep_glm, const emxArray_cell_wrap_0 *modelTerms,
     double num_starts, bool has_start, const emxArray_real_T *start_idx_vec,
-    double best_idx_data[], double *best_crit)
+    double best_idx_data[], emxArray_real_T *best_idxs,
+    double best_crits_data[], double *best_crit, int *best_crits_size)
 {
-  emxArray_real_T *best_idxs;
   emxArray_real_T *r;
   emxArray_real_T *start_designs;
   double idx_data[5000];
-  double best_crits_data[1024];
   const double *lb_data;
   const double *start_idx_vec_data;
   const double *ub_data;
@@ -3595,7 +3637,6 @@ static int coordinate_exchange_otf(
   int i2;
   int iter;
   int k;
-  int loop_ub_tmp;
   int nx;
   int start_idx;
   int v;
@@ -3605,32 +3646,31 @@ static int coordinate_exchange_otf(
   ub_data = ub->data;
   lb_data = lb->data;
   num_starts = fmax(1.0, fmin(1024.0, rt_roundd_snf(num_starts)));
-  loop_ub_tmp = (int)num_starts;
-  for (i = 0; i < loop_ub_tmp; i++) {
+  *best_crits_size = (int)num_starts;
+  for (i = 0; i < *best_crits_size; i++) {
     best_crits_data[i] = -1.0E+20;
   }
-  emxInit_real_T(&best_idxs, 2);
   best_idx_size = (int)nvars;
   i = best_idxs->size[0] * best_idxs->size[1];
   best_idxs->size[0] = (int)nvars;
-  best_idxs->size[1] = loop_ub_tmp;
+  best_idxs->size[1] = *best_crits_size;
   emxEnsureCapacity_real_T(best_idxs, i);
   best_idxs_data = best_idxs->data;
-  nx = (int)nvars * loop_ub_tmp;
+  nx = (int)nvars * *best_crits_size;
   for (i = 0; i < nx; i++) {
     best_idxs_data[i] = 0.0;
   }
   emxInit_real_T(&start_designs, 2);
   i = start_designs->size[0] * start_designs->size[1];
   start_designs->size[0] = (int)nvars;
-  start_designs->size[1] = loop_ub_tmp;
+  start_designs->size[1] = *best_crits_size;
   emxEnsureCapacity_real_T(start_designs, i);
   start_designs_data = start_designs->data;
   for (i = 0; i < nx; i++) {
     start_designs_data[i] = 0.0;
   }
   emxInit_real_T(&r, 1);
-  for (start_idx = 0; start_idx < loop_ub_tmp; start_idx++) {
+  for (start_idx = 0; start_idx < *best_crits_size; start_idx++) {
     b_rand(nvars, r);
     r1 = r->data;
     if (ub->size[0] == 1) {
@@ -3644,7 +3684,7 @@ static int coordinate_exchange_otf(
         r1[i] *= ub_data[i] - lb_data[i];
       }
     } else {
-      binary_expand_op_4(r, ub, lb);
+      binary_expand_op_5(r, ub, lb);
       r1 = r->data;
     }
     nx = r->size[0];
@@ -3658,7 +3698,7 @@ static int coordinate_exchange_otf(
             lb_data[i] + r1[i];
       }
     } else {
-      binary_expand_op_3(start_designs, start_idx, lb, r);
+      binary_expand_op_4(start_designs, start_idx, lb, r);
       start_designs_data = start_designs->data;
     }
   }
@@ -3670,7 +3710,7 @@ static int coordinate_exchange_otf(
     }
     /*  warm start replaces restart 1 */
   }
-  nx = loop_ub_tmp - 1;
+  nx = *best_crits_size - 1;
 #pragma omp parallel for num_threads(omp_get_max_threads()) private(           \
         new_crit, best_v_crit, best_val, iter, improved, current_crit,         \
             idx_data, i1, v, d1, i2, val)
@@ -3729,8 +3769,8 @@ static int coordinate_exchange_otf(
     }
   }
   emxFree_real_T(&start_designs);
-  if (loop_ub_tmp <= 2) {
-    if (loop_ub_tmp == 1) {
+  if (*best_crits_size <= 2) {
+    if (*best_crits_size == 1) {
       *best_crit = best_crits_data[0];
       nx = 1;
     } else if ((best_crits_data[0] < best_crits_data[1]) ||
@@ -3750,7 +3790,7 @@ static int coordinate_exchange_otf(
       nx = 0;
       k = 2;
       exitg1 = false;
-      while ((!exitg1) && (k <= loop_ub_tmp)) {
+      while ((!exitg1) && (k <= *best_crits_size)) {
         if (!rtIsNaN(best_crits_data[k - 1])) {
           nx = k;
           exitg1 = true;
@@ -3765,7 +3805,7 @@ static int coordinate_exchange_otf(
     } else {
       *best_crit = best_crits_data[nx - 1];
       i = nx + 1;
-      for (k = i; k <= loop_ub_tmp; k++) {
+      for (k = i; k <= *best_crits_size; k++) {
         double d;
         d = best_crits_data[k - 1];
         if (*best_crit < d) {
@@ -3778,7 +3818,6 @@ static int coordinate_exchange_otf(
   for (i = 0; i < best_idx_size; i++) {
     best_idx_data[i] = best_idxs_data[i + best_idxs->size[0] * (nx - 1)];
   }
-  emxFree_real_T(&best_idxs);
   return best_idx_size;
 }
 
@@ -3936,6 +3975,161 @@ static double copula_pmf_eta(const double y[2], const double xb[2],
     }
   }
   return fmax(pr, 2.2204460492503131E-16);
+}
+
+/*
+ * Map a starting design in factor levels (N rows; whole-plot factor
+ *  columns first, then sub-plot factor columns) to the CE index vector
+ *  [whole-plot combo per block; sub-plot combo per run].
+ *
+ * Arguments    : const emxArray_real_T *startX
+ *                double m
+ *                const emxArray_real_T *n
+ *                double N
+ *                const emxArray_real_T *wp_combos
+ *                const emxArray_real_T *sp_combos
+ *                emxArray_real_T *idx
+ * Return Type  : void
+ */
+static void design_to_idx(const emxArray_real_T *startX, double m,
+                          const emxArray_real_T *n, double N,
+                          const emxArray_real_T *wp_combos,
+                          const emxArray_real_T *sp_combos,
+                          emxArray_real_T *idx)
+{
+  double x_data[40];
+  const double *n_data;
+  const double *sp_combos_data;
+  const double *startX_data;
+  const double *wp_combos_data;
+  double curr_start;
+  double *idx_data;
+  int x_size[2];
+  int i;
+  int i1;
+  int k;
+  int loop_ub;
+  int sub;
+  int w_tmp;
+  int wp;
+  int x_size_idx_1;
+  sp_combos_data = sp_combos->data;
+  wp_combos_data = wp_combos->data;
+  n_data = n->data;
+  startX_data = startX->data;
+  w_tmp = wp_combos->size[1];
+  loop_ub = (int)(m + N);
+  i = idx->size[0];
+  idx->size[0] = loop_ub;
+  emxEnsureCapacity_real_T(idx, i);
+  idx_data = idx->data;
+  for (i = 0; i < loop_ub; i++) {
+    idx_data[i] = 0.0;
+  }
+  curr_start = 1.0;
+  i = (int)m;
+  for (wp = 0; wp < i; wp++) {
+    int c;
+    bool b_x_data[40];
+    bool exitg1;
+    bool exitg2;
+    bool y;
+    idx_data[wp] = 0.0;
+    c = 0;
+    exitg1 = false;
+    while ((!exitg1) && (c <= wp_combos->size[0] - 1)) {
+      if (wp_combos->size[1] == w_tmp) {
+        x_size[0] = 1;
+        x_size[1] = w_tmp;
+        for (i1 = 0; i1 < w_tmp; i1++) {
+          x_data[i1] =
+              wp_combos_data[c + wp_combos->size[0] * i1] -
+              startX_data[((int)curr_start + startX->size[0] * i1) - 1];
+        }
+      } else {
+        binary_expand_op_3(x_data, x_size, wp_combos, c, startX, curr_start,
+                           w_tmp - 1);
+      }
+      loop_ub = x_size[1];
+      x_size_idx_1 = x_size[1];
+      for (k = 0; k < loop_ub; k++) {
+        b_x_data[k] = (fabs(x_data[k]) < 1.0E-9);
+      }
+      y = true;
+      k = 1;
+      exitg2 = false;
+      while ((!exitg2) && (k <= x_size_idx_1)) {
+        if (!b_x_data[k - 1]) {
+          y = false;
+          exitg2 = true;
+        } else {
+          k++;
+        }
+      }
+      if (y) {
+        idx_data[wp] = (double)c + 1.0;
+        exitg1 = true;
+      } else {
+        c++;
+      }
+    }
+    i1 = (int)n_data[wp];
+    for (sub = 0; sub < i1; sub++) {
+      double r;
+      int idx_tmp;
+      r = (curr_start + ((double)sub + 1.0)) - 1.0;
+      idx_tmp = (int)(m + r) - 1;
+      idx_data[idx_tmp] = 0.0;
+      c = 0;
+      exitg1 = false;
+      while ((!exitg1) && (c <= sp_combos->size[0] - 1)) {
+        x_size_idx_1 = w_tmp + sp_combos->size[1];
+        if (w_tmp + 1 > x_size_idx_1) {
+          k = 0;
+          x_size_idx_1 = 0;
+        } else {
+          k = w_tmp;
+        }
+        if (sp_combos->size[1] == x_size_idx_1 - k) {
+          x_size[0] = 1;
+          loop_ub = sp_combos->size[1];
+          x_size[1] = sp_combos->size[1];
+          for (x_size_idx_1 = 0; x_size_idx_1 < loop_ub; x_size_idx_1++) {
+            x_data[x_size_idx_1] =
+                sp_combos_data[c + sp_combos->size[0] * x_size_idx_1] -
+                startX_data[((int)r + startX->size[0] * (k + x_size_idx_1)) -
+                            1];
+          }
+        } else {
+          binary_expand_op_2(x_data, x_size, sp_combos, c, startX, r, k,
+                             x_size_idx_1 - 1);
+        }
+        loop_ub = x_size[1];
+        x_size_idx_1 = x_size[1];
+        for (k = 0; k < loop_ub; k++) {
+          b_x_data[k] = (fabs(x_data[k]) < 1.0E-9);
+        }
+        y = true;
+        k = 1;
+        exitg2 = false;
+        while ((!exitg2) && (k <= x_size_idx_1)) {
+          if (!b_x_data[k - 1]) {
+            y = false;
+            exitg2 = true;
+          } else {
+            k++;
+          }
+        }
+        if (y) {
+          idx_data[idx_tmp] = (double)c + 1.0;
+          exitg1 = true;
+        } else {
+          c++;
+        }
+      }
+    }
+    curr_start += n_data[wp];
+  }
 }
 
 /*
@@ -4237,53 +4431,115 @@ static void plus(emxArray_real_T *in1, const emxArray_real_T *in2)
 }
 
 /*
- * Arguments    : double u0
- *                double u1
- * Return Type  : double
+ * Arguments    : const double idx_data[]
+ *                double m
+ *                const emxArray_real_T *n
+ *                double N
+ *                const emxArray_real_T *wp_combos
+ *                const emxArray_real_T *sp_combos
+ *                const emxArray_cell_wrap_0 *modelTerms
+ *                double q
+ *                emxArray_real_T *X
+ * Return Type  : void
  */
-static double rt_powd_snf(double u0, double u1)
+static void reconstruct_design(const double idx_data[], double m,
+                               const emxArray_real_T *n, double N,
+                               const emxArray_real_T *wp_combos,
+                               const emxArray_real_T *sp_combos,
+                               const emxArray_cell_wrap_0 *modelTerms, double q,
+                               emxArray_real_T *X)
 {
-  double y;
-  if (rtIsNaN(u0) || rtIsNaN(u1)) {
-    y = rtNaN;
-  } else {
-    double d;
-    double d1;
-    d = fabs(u0);
-    d1 = fabs(u1);
-    if (rtIsInf(u1)) {
-      if (d == 1.0) {
-        y = 1.0;
-      } else if (d > 1.0) {
-        if (u1 > 0.0) {
-          y = rtInf;
-        } else {
-          y = 0.0;
-        }
-      } else if (u1 > 0.0) {
-        y = 0.0;
-      } else {
-        y = rtInf;
-      }
-    } else if (d1 == 0.0) {
-      y = 1.0;
-    } else if (d1 == 1.0) {
-      if (u1 > 0.0) {
-        y = u0;
-      } else {
-        y = 1.0 / u0;
-      }
-    } else if (u1 == 2.0) {
-      y = u0 * u0;
-    } else if ((u1 == 0.5) && (u0 >= 0.0)) {
-      y = sqrt(u0);
-    } else if ((u0 < 0.0) && (u1 > floor(u1))) {
-      y = rtNaN;
-    } else {
-      y = pow(u0, u1);
-    }
+  emxArray_real_T *idx_sp;
+  emxArray_real_T *idx_wp;
+  emxArray_real_T *r;
+  const double *n_data;
+  const double *sp_combos_data;
+  const double *wp_combos_data;
+  double curr_start;
+  double *X_data;
+  double *idx_sp_data;
+  double *idx_wp_data;
+  double *r1;
+  int sp_combos_size[2];
+  int wp_combos_size[2];
+  int b_i;
+  int i;
+  int i1;
+  int i2;
+  int loop_ub_tmp;
+  int sub;
+  int wp;
+  sp_combos_data = sp_combos->data;
+  wp_combos_data = wp_combos->data;
+  n_data = n->data;
+  i = (int)m;
+  emxInit_real_T(&idx_wp, 1);
+  i1 = idx_wp->size[0];
+  idx_wp->size[0] = (int)m;
+  emxEnsureCapacity_real_T(idx_wp, i1);
+  idx_wp_data = idx_wp->data;
+  for (b_i = 0; b_i < i; b_i++) {
+    idx_wp_data[b_i] = idx_data[b_i];
   }
-  return y;
+  i1 = (int)N;
+  emxInit_real_T(&idx_sp, 1);
+  i2 = idx_sp->size[0];
+  idx_sp->size[0] = (int)N;
+  emxEnsureCapacity_real_T(idx_sp, i2);
+  idx_sp_data = idx_sp->data;
+  for (b_i = 0; b_i < i1; b_i++) {
+    idx_sp_data[b_i] = idx_data[(int)(m + ((double)b_i + 1.0)) - 1];
+  }
+  i1 = X->size[0] * X->size[1];
+  X->size[0] = (int)N;
+  loop_ub_tmp = (int)q;
+  X->size[1] = (int)q;
+  emxEnsureCapacity_real_T(X, i1);
+  X_data = X->data;
+  b_i = (int)N * (int)q;
+  for (i1 = 0; i1 < b_i; i1++) {
+    X_data[i1] = 0.0;
+  }
+  curr_start = 1.0;
+  emxInit_real_T(&r, 2);
+  for (wp = 0; wp < i; wp++) {
+    i1 = (int)n_data[wp];
+    if (i1 - 1 >= 0) {
+      wp_combos_size[0] = 1;
+      sp_combos_size[0] = 1;
+    }
+    for (sub = 0; sub < i1; sub++) {
+      double b_sp_combos_data[20];
+      double b_wp_combos_data[20];
+      double row_idx;
+      row_idx = (curr_start + ((double)sub + 1.0)) - 1.0;
+      b_i = wp_combos->size[1];
+      wp_combos_size[1] = wp_combos->size[1];
+      for (i2 = 0; i2 < b_i; i2++) {
+        b_wp_combos_data[i2] =
+            wp_combos_data[((int)idx_wp_data[wp] + wp_combos->size[0] * i2) -
+                           1];
+      }
+      b_i = sp_combos->size[1];
+      sp_combos_size[1] = sp_combos->size[1];
+      for (i2 = 0; i2 < b_i; i2++) {
+        b_sp_combos_data[i2] =
+            sp_combos_data[((int)idx_sp_data[(int)row_idx - 1] +
+                            sp_combos->size[0] * i2) -
+                           1];
+      }
+      build_model_row(b_wp_combos_data, wp_combos_size, b_sp_combos_data,
+                      sp_combos_size, modelTerms, r);
+      r1 = r->data;
+      for (i2 = 0; i2 < loop_ub_tmp; i2++) {
+        X_data[((int)row_idx + X->size[0] * i2) - 1] = r1[i2];
+      }
+    }
+    curr_start += n_data[wp];
+  }
+  emxFree_real_T(&r);
+  emxFree_real_T(&idx_sp);
+  emxFree_real_T(&idx_wp);
 }
 
 /*
@@ -4471,7 +4727,7 @@ static void univariateOrdinalFisher(double linpred,
           I_loc_data[i] += F_up * J_data[i];
         }
       } else {
-        binary_expand_op_8(I_loc, F_up, U_c);
+        binary_expand_op_9(I_loc, F_up, U_c);
         I_loc_data = I_loc->data;
       }
     }
@@ -4554,6 +4810,9 @@ static void univariateOrdinalFisher(double linpred,
  *                const emxArray_real_T *startX
  *                emxArray_real_T *optimalX
  *                double *optimalCrit
+ *                emxArray_real_T *allDesigns
+ *                double allCrits_data[]
+ *                int allCrits_size[1]
  * Return Type  : void
  */
 void DesignWizardVn_App_GapPrimary(
@@ -4567,7 +4826,8 @@ void DesignWizardVn_App_GapPrimary(
     double copulaType, double sigma2_fixed_data[], int sigma2_fixed_size[2],
     const double lambda_fixed_data[], int lambda_fixed_size[2], double seed,
     double num_starts, const emxArray_real_T *startX, emxArray_real_T *optimalX,
-    double *optimalCrit)
+    double *optimalCrit, emxArray_real_T *allDesigns, double allCrits_data[],
+    int allCrits_size[1])
 {
   static const char cv5[18] = {'c', 'o', 'p', 'u', 'l', 'a', '_', 'p', 'c',
                                'l', '_', 'g', 'o', 'd', 'a', 'm', 'b', 'e'};
@@ -4579,65 +4839,55 @@ void DesignWizardVn_App_GapPrimary(
                                'e', 'x', 'a', 'c', 't'};
   static const char cv4[10] = {'c', 'o', 'p', 'u', 'l',
                                'a', '_', 'p', 'c', 'l'};
+  static const char cv6[9] = {'i', 'n', 'd', 'e', 'p', '_', 'g', 'l', 'm'};
   static const char cv1[7] = {'a', 'v', 'e', 'r', 'a', 'g', 'e'};
-  emxArray_real_T *idx_sp;
-  emxArray_real_T *idx_wp;
-  emxArray_real_T *r;
+  emxArray_real_T *A;
+  emxArray_real_T *allIdxs;
+  emxArray_real_T *b_priorMean;
+  emxArray_real_T *b_r;
+  emxArray_real_T *nodes;
+  emxArray_real_T *r1;
   emxArray_real_T *r2;
-  emxArray_real_T *r3;
-  emxArray_real_T *r4;
   emxArray_real_T *sp_combos;
   emxArray_real_T *start_idx_vec;
-  emxArray_real_T *thetaGrid;
   emxArray_real_T *thetaGrid_gap;
   emxArray_real_T *ub;
   emxArray_real_T *weights;
   emxArray_real_T *wp_combos;
   double idxOpt_data[5000];
-  double x_data[40];
   const double *priorCov_data;
   const double *priorMean_data;
-  const double *startX_data;
   double N;
   double num_pts;
+  double num_sp_combos;
+  double num_wp_combos;
   double nvars;
   double p;
-  double radius;
-  double thetaGrid_tmp;
   double *n_data;
-  double *r1;
-  double *sp_combos_data;
-  double *thetaGrid_data;
-  double *thetaGrid_gap_data;
+  double *nodes_data;
   double *ub_data;
-  double *wp_combos_data;
-  int sp_combos_size[2];
-  int wp_combos_size[2];
-  int x_size[2];
+  double *weights_data;
+  int b_n;
   int exitg1;
   int i;
   int i1;
-  int i2;
-  int ibmat;
-  int jcol;
-  int loop_ub;
-  int loop_ub_tmp;
-  int sub;
-  int w;
-  int wp;
+  int ib;
+  int k;
+  int lastBlockLength;
+  int nblocks;
+  int nr_q;
+  unsigned int r;
   bool has_start;
   bool is_copula_pcl;
   bool is_copula_pcl_godambe;
   bool is_glmm_approx;
   bool is_glmm_exact;
   bool is_indep_glm;
-  (void)numPoints;
   (void)priorMethod_data;
   (void)priorMethod_size;
   if (!isInitialized_DesignWizardVn_App_GapPrimary) {
     DesignWizardVn_App_GapPrimary_initialize();
   }
-  startX_data = startX->data;
   priorCov_data = priorCov->data;
   priorMean_data = priorMean->data;
   n_data = n->data;
@@ -4716,7 +4966,6 @@ void DesignWizardVn_App_GapPrimary(
    */
   /*  ====================== DEFAULTS & ROUTING ====================== */
   if (evalMethod_size[1] == 0) {
-    evalMethod_size[0] = 1;
     evalMethod_size[1] = 11;
     for (i = 0; i < 11; i++) {
       evalMethod_data[i] = b_cv[i];
@@ -4737,18 +4986,37 @@ void DesignWizardVn_App_GapPrimary(
     lambda_fixed_size[0] = 0;
     lambda_fixed_size[1] = 0;
   }
-  rng(seed);
+  if (seed < 4.294967296E+9) {
+    if (seed >= 0.0) {
+      r = (unsigned int)seed;
+    } else {
+      r = 0U;
+    }
+  } else if (seed >= 4.294967296E+9) {
+    r = MAX_uint32_T;
+  } else {
+    r = 0U;
+  }
+  if (r == 0U) {
+    r = 5489U;
+  }
+  state[0] = r;
+  for (nr_q = 0; nr_q < 623; nr_q++) {
+    r = ((r ^ r >> 30U) * 1812433253U + (unsigned int)nr_q) + 1U;
+    state[nr_q + 1] = r;
+  }
+  state[624] = 624U;
   is_glmm_approx = false;
   if (evalMethod_size[1] == 11) {
-    ibmat = 0;
+    nr_q = 0;
     do {
       exitg1 = 0;
-      if (ibmat < 11) {
-        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
-            cv[(int)cv2[ibmat]]) {
+      if (nr_q < 11) {
+        if (cv[(unsigned char)evalMethod_data[nr_q] & 127] !=
+            cv[(int)cv2[nr_q]]) {
           exitg1 = 1;
         } else {
-          ibmat++;
+          nr_q++;
         }
       } else {
         is_glmm_approx = true;
@@ -4758,15 +5026,15 @@ void DesignWizardVn_App_GapPrimary(
   }
   is_glmm_exact = false;
   if (evalMethod_size[1] == 10) {
-    ibmat = 0;
+    nr_q = 0;
     do {
       exitg1 = 0;
-      if (ibmat < 10) {
-        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
-            cv[(int)cv3[ibmat]]) {
+      if (nr_q < 10) {
+        if (cv[(unsigned char)evalMethod_data[nr_q] & 127] !=
+            cv[(int)cv3[nr_q]]) {
           exitg1 = 1;
         } else {
-          ibmat++;
+          nr_q++;
         }
       } else {
         is_glmm_exact = true;
@@ -4776,15 +5044,15 @@ void DesignWizardVn_App_GapPrimary(
   }
   is_copula_pcl = false;
   if (evalMethod_size[1] == 10) {
-    ibmat = 0;
+    nr_q = 0;
     do {
       exitg1 = 0;
-      if (ibmat < 10) {
-        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
-            cv[(int)cv4[ibmat]]) {
+      if (nr_q < 10) {
+        if (cv[(unsigned char)evalMethod_data[nr_q] & 127] !=
+            cv[(int)cv4[nr_q]]) {
           exitg1 = 1;
         } else {
-          ibmat++;
+          nr_q++;
         }
       } else {
         is_copula_pcl = true;
@@ -4794,15 +5062,15 @@ void DesignWizardVn_App_GapPrimary(
   }
   is_copula_pcl_godambe = false;
   if (evalMethod_size[1] == 18) {
-    ibmat = 0;
+    nr_q = 0;
     do {
       exitg1 = 0;
-      if (ibmat < 18) {
-        if (cv[(unsigned char)evalMethod_data[ibmat] & 127] !=
-            cv[(int)cv5[ibmat]]) {
+      if (nr_q < 18) {
+        if (cv[(unsigned char)evalMethod_data[nr_q] & 127] !=
+            cv[(int)cv5[nr_q]]) {
           exitg1 = 1;
         } else {
-          ibmat++;
+          nr_q++;
         }
       } else {
         is_copula_pcl_godambe = true;
@@ -4810,7 +5078,24 @@ void DesignWizardVn_App_GapPrimary(
       }
     } while (exitg1 == 0);
   }
-  is_indep_glm = b_strcmp(evalMethod_data, evalMethod_size);
+  is_indep_glm = false;
+  if (evalMethod_size[1] == 9) {
+    nr_q = 0;
+    do {
+      exitg1 = 0;
+      if (nr_q < 9) {
+        if (cv[(unsigned char)evalMethod_data[nr_q] & 127] !=
+            cv[(int)cv6[nr_q]]) {
+          exitg1 = 1;
+        } else {
+          nr_q++;
+        }
+      } else {
+        is_indep_glm = true;
+        exitg1 = 1;
+      }
+    } while (exitg1 == 0);
+  }
   if (is_glmm_approx || is_glmm_exact) {
     has_start = true;
   } else {
@@ -4860,74 +5145,107 @@ void DesignWizardVn_App_GapPrimary(
   /*  transformed to cutpoint coordinates before being passed to the */
   /*  criterion evaluator. The transformation makes the ordering constraint */
   /*  alpha_1 < alpha_2 < alpha_3 hold by construction at every node. */
-  num_pts = 2.0 * p;
-  emxInit_real_T(&thetaGrid, 2);
-  loop_ub_tmp = (int)num_pts;
-  i1 = thetaGrid->size[0] * thetaGrid->size[1];
-  thetaGrid->size[0] = (int)num_pts;
-  i2 = (int)p;
-  thetaGrid->size[1] = (int)p;
-  emxEnsureCapacity_real_T(thetaGrid, i1);
-  thetaGrid_data = thetaGrid->data;
-  loop_ub = (int)num_pts * (int)p;
-  for (i1 = 0; i1 < loop_ub; i1++) {
-    thetaGrid_data[i1] = 0.0;
-  }
+  /*  v0.2.9: prior integration rule. numPoints selects the rule: */
+  /*    numPoints in [101, 999]: Gotwalt-Jones-Steinberg (2009) spherical-radial
+   */
+  /*        rule, nR = floor(numPoints/100) radii, nQ = numPoints - 100*nR
+   * random */
+  /*        rotations per radius (gjs_full_rule.m; 1 + nR*nQ*(p+1)(p+2) nodes).
+   */
+  /*    anything else (main.c passes 1000): the 2p-node axial rule, as in
+   * v0.2.8. */
+  emxInit_real_T(&nodes, 2);
   emxInit_real_T(&weights, 1);
-  i1 = weights->size[0];
-  weights->size[0] = (int)num_pts;
-  emxEnsureCapacity_real_T(weights, i1);
-  ub_data = weights->data;
-  for (i1 = 0; i1 < loop_ub_tmp; i1++) {
-    ub_data[i1] = 1.0 / num_pts;
+  if ((numPoints >= 101.0) && (numPoints < 1000.0)) {
+    nr_q = (int)floor(numPoints / 100.0);
+    gjs_full_rule(p, nr_q, rt_roundd_snf(numPoints - 100.0 * (double)nr_q),
+                  nodes, weights);
+  } else {
+    num_pts = 2.0 * p;
+    nblocks = (int)num_pts;
+    i1 = nodes->size[0] * nodes->size[1];
+    nodes->size[0] = (int)num_pts;
+    ib = (int)p;
+    nodes->size[1] = (int)p;
+    emxEnsureCapacity_real_T(nodes, i1);
+    nodes_data = nodes->data;
+    lastBlockLength = (int)num_pts * (int)p;
+    for (i1 = 0; i1 < lastBlockLength; i1++) {
+      nodes_data[i1] = 0.0;
+    }
+    i1 = weights->size[0];
+    weights->size[0] = (int)num_pts;
+    emxEnsureCapacity_real_T(weights, i1);
+    weights_data = weights->data;
+    for (i1 = 0; i1 < nblocks; i1++) {
+      weights_data[i1] = 1.0 / num_pts;
+    }
+    num_pts = sqrt(p);
+    for (b_n = 0; b_n < ib; b_n++) {
+      nvars = 2.0 * ((double)b_n + 1.0);
+      nodes_data[((int)(nvars - 1.0) + nodes->size[0] * b_n) - 1] = num_pts;
+      nodes_data[((int)nvars + nodes->size[0] * b_n) - 1] = -num_pts;
+    }
   }
-  radius = sqrt(p);
-  for (ibmat = 0; ibmat < i2; ibmat++) {
-    thetaGrid_tmp = 2.0 * ((double)ibmat + 1.0);
-    thetaGrid_data[((int)(thetaGrid_tmp - 1.0) + thetaGrid->size[0] * ibmat) -
-                   1] = radius;
-    thetaGrid_data[((int)thetaGrid_tmp + thetaGrid->size[0] * ibmat) - 1] =
-        -radius;
+  emxInit_real_T(&A, 2);
+  i1 = A->size[0] * A->size[1];
+  A->size[0] = priorCov->size[0];
+  A->size[1] = priorCov->size[1];
+  emxEnsureCapacity_real_T(A, i1);
+  ub_data = A->data;
+  lastBlockLength = priorCov->size[0] * priorCov->size[1];
+  for (i1 = 0; i1 < lastBlockLength; i1++) {
+    ub_data[i1] = priorCov_data[i1];
+  }
+  nr_q = priorCov->size[0];
+  b_n = priorCov->size[1];
+  if (nr_q <= b_n) {
+    b_n = nr_q;
+  }
+  if (b_n != 0) {
+    nr_q = xpotrf(b_n, A, priorCov->size[0]);
+    ub_data = A->data;
+    if (nr_q == 0) {
+      nr_q = b_n;
+    } else {
+      nr_q--;
+    }
+    for (nblocks = 0; nblocks <= nr_q - 2; nblocks++) {
+      i1 = nblocks + 2;
+      for (b_n = i1; b_n <= nr_q; b_n++) {
+        ub_data[(b_n + A->size[0] * nblocks) - 1] = 0.0;
+      }
+    }
+  }
+  emxInit_real_T(&b_priorMean, 2);
+  i1 = b_priorMean->size[0] * b_priorMean->size[1];
+  b_priorMean->size[0] = 1;
+  lastBlockLength = priorMean->size[1];
+  b_priorMean->size[1] = priorMean->size[1];
+  emxEnsureCapacity_real_T(b_priorMean, i1);
+  ub_data = b_priorMean->data;
+  for (i1 = 0; i1 < lastBlockLength; i1++) {
+    ub_data[i1] = priorMean_data[i1];
   }
   emxInit_real_T(&thetaGrid_gap, 2);
-  i1 = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-  thetaGrid_gap->size[0] = (int)num_pts;
-  i2 = priorMean->size[1];
-  thetaGrid_gap->size[1] = priorMean->size[1];
-  emxEnsureCapacity_real_T(thetaGrid_gap, i1);
-  thetaGrid_gap_data = thetaGrid_gap->data;
-  for (jcol = 0; jcol < i2; jcol++) {
-    ibmat = jcol * thetaGrid->size[0];
-    for (w = 0; w < loop_ub_tmp; w++) {
-      thetaGrid_gap_data[ibmat + w] = priorMean_data[jcol];
-    }
-  }
-  emxInit_real_T(&r, 2);
-  i1 = r->size[0] * r->size[1];
-  r->size[0] = priorCov->size[0];
-  r->size[1] = priorCov->size[1];
-  emxEnsureCapacity_real_T(r, i1);
-  r1 = r->data;
-  loop_ub = priorCov->size[0] * priorCov->size[1];
-  for (i1 = 0; i1 < loop_ub; i1++) {
-    r1[i1] = priorCov_data[i1];
-  }
-  chol(r);
-  emxInit_real_T(&r2, 2);
-  mtimes(thetaGrid, r, r2);
-  r1 = r2->data;
-  emxFree_real_T(&r);
-  if ((thetaGrid_gap->size[0] == r2->size[0]) &&
-      (thetaGrid_gap->size[1] == r2->size[1])) {
-    loop_ub = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-    for (i1 = 0; i1 < loop_ub; i1++) {
-      thetaGrid_gap_data[i1] += r1[i1];
+  repmat(b_priorMean, nodes->size[0], thetaGrid_gap);
+  weights_data = thetaGrid_gap->data;
+  emxFree_real_T(&b_priorMean);
+  emxInit_real_T(&b_r, 2);
+  mtimes(nodes, A, b_r);
+  nodes_data = b_r->data;
+  emxFree_real_T(&A);
+  if ((thetaGrid_gap->size[0] == b_r->size[0]) &&
+      (thetaGrid_gap->size[1] == b_r->size[1])) {
+    lastBlockLength = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
+    for (i1 = 0; i1 < lastBlockLength; i1++) {
+      weights_data[i1] += nodes_data[i1];
     }
   } else {
-    plus(thetaGrid_gap, r2);
-    thetaGrid_gap_data = thetaGrid_gap->data;
+    plus(thetaGrid_gap, b_r);
+    weights_data = thetaGrid_gap->data;
   }
-  emxFree_real_T(&r2);
+  emxFree_real_T(&b_r);
   /*  Gap-to-cutpoint transformation, generalized to arbitrary K: */
   /*    thetaGrid(:, 1)    = alpha_1                          = thetaGrid_gap(:,
    * 1) */
@@ -4936,337 +5254,231 @@ void DesignWizardVn_App_GapPrimary(
   /*    thetaGrid(:, k+1:p) = beta                            = thetaGrid_gap(:,
    * k+1:p), k=num_alphas */
   /*  This makes alpha_1 < alpha_2 < ... < alpha_{K-1} hold by construction. */
-  loop_ub = thetaGrid_gap->size[0];
-  i1 = thetaGrid->size[0] * thetaGrid->size[1];
-  thetaGrid->size[0] = thetaGrid_gap->size[0];
-  thetaGrid->size[1] = thetaGrid_gap->size[1];
-  emxEnsureCapacity_real_T(thetaGrid, i1);
-  thetaGrid_data = thetaGrid->data;
-  ibmat = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-  for (i1 = 0; i1 < ibmat; i1++) {
-    thetaGrid_data[i1] = thetaGrid_gap_data[i1];
+  lastBlockLength = thetaGrid_gap->size[0];
+  i1 = nodes->size[0] * nodes->size[1];
+  nodes->size[0] = thetaGrid_gap->size[0];
+  nodes->size[1] = thetaGrid_gap->size[1];
+  emxEnsureCapacity_real_T(nodes, i1);
+  nodes_data = nodes->data;
+  b_n = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
+  for (i1 = 0; i1 < b_n; i1++) {
+    nodes_data[i1] = weights_data[i1];
   }
   /*  allocate with same shape */
-  for (i1 = 0; i1 < loop_ub; i1++) {
-    thetaGrid_data[i1] = thetaGrid_gap_data[i1];
+  for (i1 = 0; i1 < lastBlockLength; i1++) {
+    nodes_data[i1] = weights_data[i1];
   }
   emxInit_real_T(&ub, 1);
-  for (w = 0; w <= i - 3; w++) {
+  for (nblocks = 0; nblocks <= i - 3; nblocks++) {
     i1 = ub->size[0];
-    ub->size[0] = loop_ub;
+    ub->size[0] = lastBlockLength;
     emxEnsureCapacity_real_T(ub, i1);
     ub_data = ub->data;
-    for (ibmat = 0; ibmat < loop_ub; ibmat++) {
-      ub_data[ibmat] =
-          exp(thetaGrid_gap_data[ibmat + thetaGrid_gap->size[0] * (w + 1)]);
+    for (k = 0; k < lastBlockLength; k++) {
+      ub_data[k] =
+          exp(weights_data[k + thetaGrid_gap->size[0] * (nblocks + 1)]);
     }
-    if (thetaGrid->size[0] == ub->size[0]) {
-      ibmat = thetaGrid->size[0];
+    if (nodes->size[0] == ub->size[0]) {
+      b_n = nodes->size[0];
       i1 = ub->size[0];
-      ub->size[0] = thetaGrid->size[0];
+      ub->size[0] = nodes->size[0];
       emxEnsureCapacity_real_T(ub, i1);
       ub_data = ub->data;
-      for (i1 = 0; i1 < ibmat; i1++) {
-        ub_data[i1] += thetaGrid_data[i1 + thetaGrid->size[0] * w];
+      for (i1 = 0; i1 < b_n; i1++) {
+        ub_data[i1] += nodes_data[i1 + nodes->size[0] * nblocks];
       }
-      for (i1 = 0; i1 < ibmat; i1++) {
-        thetaGrid_data[i1 + thetaGrid->size[0] * (w + 1)] = ub_data[i1];
+      for (i1 = 0; i1 < b_n; i1++) {
+        nodes_data[i1 + nodes->size[0] * (nblocks + 1)] = ub_data[i1];
       }
     } else {
-      binary_expand_op(thetaGrid, w, ub);
-      thetaGrid_data = thetaGrid->data;
+      binary_expand_op(nodes, nblocks, ub);
+      nodes_data = nodes->data;
     }
   }
   /*  regression-coefficient block: unchanged */
   if (((double)i - 1.0) + 1.0 > p) {
     i1 = 0;
-    i2 = 0;
-    jcol = 0;
+    ib = 0;
+    b_n = 0;
   } else {
     i1 = (int)(((double)i - 1.0) + 1.0) - 1;
-    i2 = (int)p;
-    jcol = i1;
+    ib = (int)p;
+    b_n = i1;
   }
-  loop_ub_tmp = i2 - i1;
-  for (i2 = 0; i2 < loop_ub_tmp; i2++) {
-    for (ibmat = 0; ibmat < loop_ub; ibmat++) {
-      thetaGrid_gap_data[ibmat + loop_ub * i2] =
-          thetaGrid_gap_data[ibmat + thetaGrid_gap->size[0] * (i1 + i2)];
+  nblocks = ib - i1;
+  for (ib = 0; ib < nblocks; ib++) {
+    for (nr_q = 0; nr_q < lastBlockLength; nr_q++) {
+      weights_data[nr_q + lastBlockLength * ib] =
+          weights_data[nr_q + thetaGrid_gap->size[0] * (i1 + ib)];
     }
   }
   i1 = thetaGrid_gap->size[0] * thetaGrid_gap->size[1];
-  thetaGrid_gap->size[1] = loop_ub_tmp;
+  thetaGrid_gap->size[1] = nblocks;
   emxEnsureCapacity_real_T(thetaGrid_gap, i1);
-  thetaGrid_gap_data = thetaGrid_gap->data;
-  ibmat = thetaGrid->size[0];
-  for (i1 = 0; i1 < loop_ub_tmp; i1++) {
-    for (i2 = 0; i2 < ibmat; i2++) {
-      thetaGrid_data[i2 + thetaGrid->size[0] * (jcol + i1)] =
-          thetaGrid_gap_data[i2 + ibmat * i1];
+  weights_data = thetaGrid_gap->data;
+  nr_q = nodes->size[0];
+  for (i1 = 0; i1 < nblocks; i1++) {
+    for (ib = 0; ib < nr_q; ib++) {
+      nodes_data[ib + nodes->size[0] * (b_n + i1)] =
+          weights_data[ib + nr_q * i1];
     }
   }
   emxFree_real_T(&thetaGrid_gap);
   emxInit_real_T(&wp_combos, 2);
-  radius = generate_combos(wp_levelSets_data, wp_levelSets_size, wp_combos);
-  wp_combos_data = wp_combos->data;
+  num_wp_combos =
+      generate_combos(wp_levelSets_data, wp_levelSets_size, wp_combos);
   emxInit_real_T(&sp_combos, 2);
-  thetaGrid_tmp =
+  num_sp_combos =
       generate_combos(sp_levelSets_data, sp_levelSets_size, sp_combos);
-  sp_combos_data = sp_combos->data;
   /*  ====================== UNBALANCED SIZING ====================== */
   /*  Ensure n is explicitly a 1 x m row vector to match coder signature */
   if (n->size[1] == 1) {
     num_pts = n_data[0];
     i1 = n->size[0] * n->size[1];
     n->size[0] = 1;
-    i2 = (int)m;
+    ib = (int)m;
     n->size[1] = (int)m;
     emxEnsureCapacity_real_T(n, i1);
     n_data = n->data;
-    for (ibmat = 0; ibmat < i2; ibmat++) {
-      n_data[ibmat] = num_pts;
+    for (b_n = 0; b_n < ib; b_n++) {
+      n_data[b_n] = num_pts;
     }
   }
-  N = sum(n);
+  if (n->size[1] == 0) {
+    N = 0.0;
+  } else {
+    if (n->size[1] <= 1024) {
+      nr_q = n->size[1];
+      lastBlockLength = 0;
+      nblocks = 1;
+    } else {
+      nr_q = 1024;
+      nblocks = (int)((unsigned int)n->size[1] >> 10);
+      lastBlockLength = n->size[1] - (nblocks << 10);
+      if (lastBlockLength > 0) {
+        nblocks++;
+      } else {
+        lastBlockLength = 1024;
+      }
+    }
+    N = n_data[0];
+    for (k = 2; k <= nr_q; k++) {
+      N += n_data[k - 1];
+    }
+    for (ib = 2; ib <= nblocks; ib++) {
+      nr_q = (ib - 1) << 10;
+      num_pts = n_data[nr_q];
+      if (ib == nblocks) {
+        b_n = lastBlockLength;
+      } else {
+        b_n = 1024;
+      }
+      for (k = 2; k <= b_n; k++) {
+        num_pts += n_data[(nr_q + k) - 1];
+      }
+      N += num_pts;
+    }
+  }
   /*  ====================== OPTIMIZER SETUP ====================== */
   nvars = m + N;
-  loop_ub_tmp = (int)nvars;
+  nblocks = (int)nvars;
   i1 = ub->size[0];
   ub->size[0] = (int)nvars;
   emxEnsureCapacity_real_T(ub, i1);
   ub_data = ub->data;
-  for (i1 = 0; i1 < loop_ub_tmp; i1++) {
+  for (i1 = 0; i1 < nblocks; i1++) {
     ub_data[i1] = 0.0;
   }
   i1 = (int)m;
-  for (ibmat = 0; ibmat < i1; ibmat++) {
-    ub_data[ibmat] = radius;
+  for (b_n = 0; b_n < i1; b_n++) {
+    ub_data[b_n] = num_wp_combos;
   }
-  i2 = (int)(nvars + (1.0 - (m + 1.0)));
-  for (ibmat = 0; ibmat < i2; ibmat++) {
-    ub_data[(int)((m + 1.0) + (double)ibmat) - 1] = thetaGrid_tmp;
+  i1 = (int)(nvars + (1.0 - (m + 1.0)));
+  for (b_n = 0; b_n < i1; b_n++) {
+    ub_data[(int)((m + 1.0) + (double)b_n) - 1] = num_sp_combos;
   }
   /*  v0.2.8 (warm start): an optional N x (w+s) starting design in factor */
   /*  levels (whole-plot factors first, rows grouped by whole plot) replaces */
   /*  the random starting design of restart 1. The remaining restarts keep */
   /*  their random starts, so the random stream is unchanged. */
   emxInit_real_T(&start_idx_vec, 1);
-  i2 = start_idx_vec->size[0];
+  i1 = start_idx_vec->size[0];
   start_idx_vec->size[0] = (int)nvars;
-  emxEnsureCapacity_real_T(start_idx_vec, i2);
+  emxEnsureCapacity_real_T(start_idx_vec, i1);
   ub_data = start_idx_vec->data;
-  for (i2 = 0; i2 < loop_ub_tmp; i2++) {
-    ub_data[i2] = 0.0;
+  for (i1 = 0; i1 < nblocks; i1++) {
+    ub_data[i1] = 0.0;
   }
   has_start = ((startX->size[0] != 0) && (startX->size[1] != 0));
   if (has_start) {
-    /*  Map a starting design in factor levels (N rows; whole-plot factor */
-    /*  columns first, then sub-plot factor columns) to the CE index vector */
-    /*  [whole-plot combo per block; sub-plot combo per run]. */
-    w = wp_combos->size[1];
-    i2 = start_idx_vec->size[0];
-    start_idx_vec->size[0] = (int)nvars;
-    emxEnsureCapacity_real_T(start_idx_vec, i2);
-    ub_data = start_idx_vec->data;
-    for (i2 = 0; i2 < loop_ub_tmp; i2++) {
-      ub_data[i2] = 0.0;
-    }
-    radius = 1.0;
-    for (wp = 0; wp < i1; wp++) {
-      int c;
-      bool b_x_data[40];
-      bool exitg2;
-      bool exitg3;
-      bool y;
-      ub_data[wp] = 0.0;
-      c = 0;
-      exitg2 = false;
-      while ((!exitg2) && (c <= wp_combos->size[0] - 1)) {
-        if (wp_combos->size[1] == w) {
-          x_size[0] = 1;
-          loop_ub = wp_combos->size[1];
-          x_size[1] = wp_combos->size[1];
-          for (i2 = 0; i2 < loop_ub; i2++) {
-            x_data[i2] = wp_combos_data[c + wp_combos->size[0] * i2] -
-                         startX_data[((int)radius + startX->size[0] * i2) - 1];
-          }
-        } else {
-          binary_expand_op_2(x_data, x_size, wp_combos, c, startX, radius,
-                             w - 1);
-        }
-        loop_ub = x_size[1];
-        jcol = x_size[1];
-        for (ibmat = 0; ibmat < loop_ub; ibmat++) {
-          b_x_data[ibmat] = (fabs(x_data[ibmat]) < 1.0E-9);
-        }
-        y = true;
-        ibmat = 1;
-        exitg3 = false;
-        while ((!exitg3) && (ibmat <= jcol)) {
-          if (!b_x_data[ibmat - 1]) {
-            y = false;
-            exitg3 = true;
-          } else {
-            ibmat++;
-          }
-        }
-        if (y) {
-          ub_data[wp] = (double)c + 1.0;
-          exitg2 = true;
-        } else {
-          c++;
-        }
-      }
-      i2 = (int)n_data[wp];
-      for (sub = 0; sub < i2; sub++) {
-        int start_idx_vec_tmp;
-        num_pts = (radius + ((double)sub + 1.0)) - 1.0;
-        start_idx_vec_tmp = (int)(m + num_pts) - 1;
-        ub_data[start_idx_vec_tmp] = 0.0;
-        c = 0;
-        exitg2 = false;
-        while ((!exitg2) && (c <= sp_combos->size[0] - 1)) {
-          jcol = w + sp_combos->size[1];
-          if (w + 1 > jcol) {
-            ibmat = 0;
-            jcol = 0;
-          } else {
-            ibmat = w;
-          }
-          if (sp_combos->size[1] == jcol - ibmat) {
-            x_size[0] = 1;
-            loop_ub = sp_combos->size[1];
-            x_size[1] = sp_combos->size[1];
-            for (jcol = 0; jcol < loop_ub; jcol++) {
-              x_data[jcol] = sp_combos_data[c + sp_combos->size[0] * jcol] -
-                             startX_data[((int)num_pts +
-                                          startX->size[0] * (ibmat + jcol)) -
-                                         1];
-            }
-          } else {
-            binary_expand_op_1(x_data, x_size, sp_combos, c, startX, num_pts,
-                               ibmat, jcol - 1);
-          }
-          loop_ub = x_size[1];
-          jcol = x_size[1];
-          for (ibmat = 0; ibmat < loop_ub; ibmat++) {
-            b_x_data[ibmat] = (fabs(x_data[ibmat]) < 1.0E-9);
-          }
-          y = true;
-          ibmat = 1;
-          exitg3 = false;
-          while ((!exitg3) && (ibmat <= jcol)) {
-            if (!b_x_data[ibmat - 1]) {
-              y = false;
-              exitg3 = true;
-            } else {
-              ibmat++;
-            }
-          }
-          if (y) {
-            ub_data[start_idx_vec_tmp] = (double)c + 1.0;
-            exitg2 = true;
-          } else {
-            c++;
-          }
-        }
-      }
-      radius += n_data[wp];
-    }
+    design_to_idx(startX, m, n, N, wp_combos, sp_combos, start_idx_vec);
   }
-  emxInit_real_T(&r3, 1);
-  i2 = r3->size[0];
-  r3->size[0] = (int)nvars;
-  emxEnsureCapacity_real_T(r3, i2);
-  r1 = r3->data;
-  for (i2 = 0; i2 < loop_ub_tmp; i2++) {
-    r1[i2] = 1.0;
+  emxInit_real_T(&r1, 1);
+  i1 = r1->size[0];
+  r1->size[0] = (int)nvars;
+  emxEnsureCapacity_real_T(r1, i1);
+  nodes_data = r1->data;
+  for (i1 = 0; i1 < nblocks; i1++) {
+    nodes_data[i1] = 1.0;
   }
+  emxInit_real_T(&allIdxs, 2);
   coordinate_exchange_otf(
-      m, n, N, weights, p, crit_mode_data, crit_mode_size, nvars, r3, ub,
-      wp_combos, sp_combos, thetaGrid, i, modelTerms->size[1],
-      sigma2_fixed_data, sigma2_fixed_size, lambda_fixed_data,
-      lambda_fixed_size, copulaType, is_glmm_approx, is_glmm_exact,
-      is_copula_pcl, is_copula_pcl_godambe, is_indep_glm, modelTerms,
+      m, n, N, weights, p, crit_mode_data, crit_mode_size, nvars, r1, ub,
+      wp_combos, sp_combos, nodes, i, modelTerms->size[1], sigma2_fixed_data,
+      sigma2_fixed_size, lambda_fixed_data, lambda_fixed_size, copulaType,
+      is_glmm_approx, is_glmm_exact, is_copula_pcl, is_copula_pcl_godambe,
+      is_indep_glm, modelTerms,
       fmax(1.0, fmin(1024.0, rt_roundd_snf(num_starts))), has_start,
-      start_idx_vec, idxOpt_data, &num_pts);
-  emxFree_real_T(&r3);
+      start_idx_vec, idxOpt_data, allIdxs, allCrits_data, &num_pts,
+      &allCrits_size[0]);
+  ub_data = allIdxs->data;
+  emxFree_real_T(&r1);
   emxFree_real_T(&start_idx_vec);
   emxFree_real_T(&ub);
   *optimalCrit = computeCriterion_otf(
       idxOpt_data, m, n, N, weights, p, crit_mode_data, crit_mode_size,
-      wp_combos, sp_combos, thetaGrid, i, modelTerms->size[1],
-      sigma2_fixed_data, sigma2_fixed_size, lambda_fixed_data,
-      lambda_fixed_size, copulaType, is_glmm_approx, is_glmm_exact,
-      is_copula_pcl, is_copula_pcl_godambe, is_indep_glm, modelTerms);
+      wp_combos, sp_combos, nodes, i, modelTerms->size[1], sigma2_fixed_data,
+      sigma2_fixed_size, lambda_fixed_data, lambda_fixed_size, copulaType,
+      is_glmm_approx, is_glmm_exact, is_copula_pcl, is_copula_pcl_godambe,
+      is_indep_glm, modelTerms);
   emxFree_real_T(&weights);
-  emxFree_real_T(&thetaGrid);
-  emxInit_real_T(&idx_wp, 1);
-  i = idx_wp->size[0];
-  idx_wp->size[0] = (int)m;
-  emxEnsureCapacity_real_T(idx_wp, i);
-  ub_data = idx_wp->data;
-  for (ibmat = 0; ibmat < i1; ibmat++) {
-    ub_data[ibmat] = idxOpt_data[ibmat];
+  emxFree_real_T(&nodes);
+  reconstruct_design(idxOpt_data, m, n, N, wp_combos, sp_combos, modelTerms,
+                     modelTerms->size[1], optimalX);
+  /*  v0.2.9: per-restart final designs and criteria (main.c writes them only */
+  /*  when write_restarts = 1). allDesigns(:, :, k) is restart k's design. */
+  lastBlockLength = optimalX->size[0];
+  i = allDesigns->size[0] * allDesigns->size[1] * allDesigns->size[2];
+  allDesigns->size[0] = optimalX->size[0];
+  b_n = optimalX->size[1];
+  allDesigns->size[1] = optimalX->size[1];
+  i1 = allIdxs->size[1];
+  allDesigns->size[2] = allIdxs->size[1];
+  emxEnsureCapacity_real_T(allDesigns, i);
+  weights_data = allDesigns->data;
+  nr_q = optimalX->size[0] * optimalX->size[1] * allIdxs->size[1];
+  for (i = 0; i < nr_q; i++) {
+    weights_data[i] = 0.0;
   }
-  i = (int)N;
-  emxInit_real_T(&idx_sp, 1);
-  i2 = idx_sp->size[0];
-  idx_sp->size[0] = (int)N;
-  emxEnsureCapacity_real_T(idx_sp, i2);
-  thetaGrid_data = idx_sp->data;
-  for (ibmat = 0; ibmat < i; ibmat++) {
-    thetaGrid_data[ibmat] = idxOpt_data[(int)(m + ((double)ibmat + 1.0)) - 1];
-  }
-  i = optimalX->size[0] * optimalX->size[1];
-  optimalX->size[0] = (int)N;
-  loop_ub = modelTerms->size[1];
-  optimalX->size[1] = modelTerms->size[1];
-  emxEnsureCapacity_real_T(optimalX, i);
-  thetaGrid_gap_data = optimalX->data;
-  ibmat = (int)N * modelTerms->size[1];
-  for (i = 0; i < ibmat; i++) {
-    thetaGrid_gap_data[i] = 0.0;
-  }
-  radius = 1.0;
-  emxInit_real_T(&r4, 2);
-  for (wp = 0; wp < i1; wp++) {
-    i = (int)n_data[wp];
-    if (i - 1 >= 0) {
-      wp_combos_size[0] = 1;
-      sp_combos_size[0] = 1;
+  nblocks = allIdxs->size[0];
+  emxInit_real_T(&r2, 2);
+  for (k = 0; k < i1; k++) {
+    for (i = 0; i < nblocks; i++) {
+      idxOpt_data[i] = ub_data[i + allIdxs->size[0] * k];
     }
-    for (sub = 0; sub < i; sub++) {
-      double b_sp_combos_data[20];
-      double b_wp_combos_data[20];
-      num_pts = (radius + ((double)sub + 1.0)) - 1.0;
-      loop_ub_tmp = wp_combos->size[1];
-      wp_combos_size[1] = wp_combos->size[1];
-      for (i2 = 0; i2 < loop_ub_tmp; i2++) {
-        b_wp_combos_data[i2] =
-            wp_combos_data[((int)ub_data[wp] + wp_combos->size[0] * i2) - 1];
-      }
-      loop_ub_tmp = sp_combos->size[1];
-      sp_combos_size[1] = sp_combos->size[1];
-      for (i2 = 0; i2 < loop_ub_tmp; i2++) {
-        b_sp_combos_data[i2] =
-            sp_combos_data[((int)thetaGrid_data[(int)num_pts - 1] +
-                            sp_combos->size[0] * i2) -
-                           1];
-      }
-      build_model_row(b_wp_combos_data, wp_combos_size, b_sp_combos_data,
-                      sp_combos_size, modelTerms, r4);
-      r1 = r4->data;
-      for (i2 = 0; i2 < loop_ub; i2++) {
-        thetaGrid_gap_data[((int)num_pts + optimalX->size[0] * i2) - 1] =
-            r1[i2];
+    reconstruct_design(idxOpt_data, m, n, N, wp_combos, sp_combos, modelTerms,
+                       modelTerms->size[1], r2);
+    nodes_data = r2->data;
+    for (i = 0; i < b_n; i++) {
+      for (ib = 0; ib < lastBlockLength; ib++) {
+        weights_data[(ib + allDesigns->size[0] * i) +
+                     allDesigns->size[0] * allDesigns->size[1] * k] =
+            nodes_data[ib + lastBlockLength * i];
       }
     }
-    radius += n_data[wp];
   }
-  emxFree_real_T(&r4);
-  emxFree_real_T(&idx_sp);
-  emxFree_real_T(&idx_wp);
+  emxFree_real_T(&r2);
+  emxFree_real_T(&allIdxs);
   emxFree_real_T(&sp_combos);
   emxFree_real_T(&wp_combos);
 }
