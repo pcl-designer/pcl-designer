@@ -1,0 +1,83 @@
+================================================================
+  PCL Designer — Quick Start
+================================================================
+
+This folder contains:
+
+  - The PCL Designer executable for your platform
+  - USER_GUIDE.md   (full instructions; open in any browser or
+                     markdown viewer for nicer formatting)
+  - QUICKSTART.txt  (this file)
+
+----------------------------------------------------------------
+  HOW TO LAUNCH (pick your platform)
+----------------------------------------------------------------
+
+  macOS (Apple Silicon: M1, M2, M3, M4):
+
+      Open Terminal.app and run these three lines:
+
+          cd "/path/to/this/folder"
+          chmod +x PCLDesigner-macos-arm64
+          xattr -dr com.apple.quarantine PCLDesigner-macos-arm64
+          ./PCLDesigner-macos-arm64
+
+      Or double-click PCLDesigner-macos-arm64 in Finder. macOS will
+      say "developer cannot be verified" — click OK, then right-click
+      the file → Open → Open. macOS remembers after the first time.
+
+  Windows (64-bit):
+
+      Double-click PCLDesigner-windows-x86_64.exe in File Explorer.
+
+      Windows SmartScreen will warn:
+        "Windows protected your PC."
+      Click the small blue "More info" link at the top of the popup,
+      then click the "Run anyway" button that appears.
+
+  Linux (64-bit):
+
+      Open a terminal in this folder and run:
+
+          chmod +x PCLDesigner-linux-x86_64
+          ./PCLDesigner-linux-x86_64
+
+----------------------------------------------------------------
+  WHAT HAPPENS NEXT
+----------------------------------------------------------------
+
+A black console window opens with a banner that ends:
+
+    Open in your browser: http://localhost:8765
+    Close this window (or Ctrl+C) to quit.
+
+Your default web browser opens automatically to that address with
+the PCL Designer form. Fill in your design parameters, click
+"Generate optimal design," and the optimal design matrix appears
+below the form with CSV and JSON download buttons.
+
+To quit: close the console window, or press Ctrl+C inside it.
+
+----------------------------------------------------------------
+  NEED MORE DETAIL?
+----------------------------------------------------------------
+
+See USER_GUIDE.md in this folder. It covers:
+
+  - What every form field means
+  - How to interpret the design-matrix output
+  - Troubleshooting common issues
+  - Privacy and data handling
+  - Where to report bugs or request features
+
+----------------------------------------------------------------
+  CITATION
+----------------------------------------------------------------
+
+If this tool supports work you publish, please cite:
+
+  [Author(s) anonymized for peer review] (under review).
+  Robust D-Optimal Designs for Ordinal Split-Plot Experiments
+  via a Pairwise Composite Likelihood Surrogate.
+
+================================================================
