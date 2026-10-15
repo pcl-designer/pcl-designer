@@ -177,7 +177,7 @@ MIT — see `LICENSE`.
 ## Changelog
 
 - **v1.0.0** --- First public release, the version cited in the accompanying paper.
-  - Coordinate-exchange search for split-plot designs with an ordinal response under the PCL copula surrogate (`copula_pcl`; Frank or Clayton copula) or the exact GLMM (`glmm_exact`), with the exact copula, the Godambe form of the PCL criterion and the independence GLM available for diagnostics.
+  - Coordinate-exchange search for split-plot designs with an ordinal response under the PCL copula surrogate (`copula_pcl`; Frank or Clayton copula) or the exact GLMM (`glmm_exact`), with the exact copula and the independence GLM available for diagnostics.
   - Fisher scores by central finite differences in the effective coordinates (the sub-plot linear predictors and the cutpoints), mapped to the full parameter vector by the chain rule: min(*p*, *n*+*K*-1) coordinates for the exact GLMM and min(*p*, *K*+1) for the PCL surrogate.
   - PCL block weighting 1/(n_i - 1), the standard composite-likelihood weighting for unequal cluster sizes (Varin, Reid & Firth, 2011, *Statistica Sinica* 21:5-42). For balanced designs it shifts the reported criterion by the constant *p* ln(*n*-1) and does not change design selection.
   - Prior integration by the 2p-node axial rule (`quadrature=axial`, the default) or by the spherical-radial rule of Gotwalt, Jones and Steinberg (2009, *Technometrics* 51:88-95; `quadrature=gjs`, 1 + 2(p+1)(p+2) nodes), recommended when the prior on the coefficients is wide. Under the latter, a design whose information is singular at any node is rejected, because the simplex vertex weights are negative for p > 7.
